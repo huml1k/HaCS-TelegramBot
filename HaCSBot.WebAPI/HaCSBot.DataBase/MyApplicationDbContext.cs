@@ -10,5 +10,8 @@ namespace HaCSBot.DataBase
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<House> Houses { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<BuildingMaintenance> BuildingMaintenances { get; set; }
     }
 }

@@ -11,5 +11,16 @@ namespace HaCSBot.DataBase.Models
         public string StreetNumber { get; set; }
 
         public string Apartment {  get; set; }
+
+        public static House Create(House house) 
+        {
+            return new House
+            {
+                Id = house.Id,
+                StreetsType = house.StreetsType,
+                StreetNumber = house.StreetNumber,
+                Apartment = house.Apartment,
+            };
+        }
     }
 }

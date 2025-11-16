@@ -26,7 +26,7 @@ namespace HaCSBot.WebAPI
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
+            
 
             app.MapControllers();
 

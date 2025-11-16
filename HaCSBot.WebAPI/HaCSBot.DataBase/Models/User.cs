@@ -1,4 +1,6 @@
-﻿namespace HaCSBot.DataBase.Models
+﻿using HaCSBot.DataBase.Enums;
+
+namespace HaCSBot.DataBase.Models
 {
     public class User
     {
@@ -8,9 +10,10 @@
         public string LastName { get; set; }
         public string MiddleName { get; set; }
         public string Phone { get; set; }
+        public Roles Roles { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
-        public User CreateUser(User user)
+        public User Create(User user)
         {
             return new User
             {
@@ -19,6 +22,8 @@
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 MiddleName = user.MiddleName,
+                Phone = user.Phone,
+                Roles = user.Roles,
                 CreatedDate = user.CreatedDate,
             };
         }
