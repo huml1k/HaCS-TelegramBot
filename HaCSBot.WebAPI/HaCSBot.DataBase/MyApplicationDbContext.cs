@@ -1,4 +1,5 @@
-﻿using HaCSBot.DataBase.Models;
+﻿using HaCSBot.DataBase.Configurations;
+using HaCSBot.DataBase.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HaCSBot.DataBase
@@ -10,8 +11,18 @@ namespace HaCSBot.DataBase
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<House> Houses { get; set; }
+        public DbSet<Building> Buildings { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<BuildingMaintenance> BuildingMaintenances { get; set; }
+        public DbSet<Apartment> Apartments { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfiguration(new ApartmentConfiguration());
+            modelBuilder.ApplyConfiguration(new BuildingConfiguration());
+            modelBuilder.ApplyConfiguration(new BuildingMaintenanceConfiguration());
+            modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new UserConfiguration());
+        }
     }
 }
