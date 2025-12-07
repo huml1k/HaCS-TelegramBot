@@ -7,7 +7,7 @@ using Telegram.Bot.Types;
 namespace HaCSBot.WebAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/")]
     public class BotController(IOptions<BotConfiguration> Config) : ControllerBase
     {
         [HttpGet("setWebhook")]
@@ -21,8 +21,6 @@ namespace HaCSBot.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Update update, [FromServices] ITelegramBotClient bot, [FromServices] UpdateHandler handleUpdateService, CancellationToken ct)
         {
-            //if (Request.Headers["X-Telegram-Bot-Api-Secret-Token"] != Config.Value.SecretToken)
-            //    return Forbid();
             try
             {
                 await handleUpdateService.HandleUpdateAsync(bot, update, ct);
