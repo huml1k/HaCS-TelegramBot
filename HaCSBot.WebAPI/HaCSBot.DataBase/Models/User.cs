@@ -11,23 +11,13 @@ namespace HaCSBot.DataBase.Models
         public string MiddleName { get; set; }
         public required string Phone { get; set; }
         public Roles Role { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
+        public DateTime? CreatedDate { get; set; } = DateTime.UtcNow;
         public List<Apartment> Apartments { get; set; }
 
-        public User Create(User user)
-        {
-            return new User
-            {
-                Id = user.Id,
-                UserId = user.UserId,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                MiddleName = user.MiddleName,
-                Phone = user.Phone,
-                Role = user.Role,
-                CreatedDate = user.CreatedDate,
-            };
-        }
+        // новые свойства
+		public long? TelegramId { get; set; }        // null, если ещё не привязан к Telegram
+		public bool IsAuthorizedInBot { get; set; }  // флаг: вошёл ли через /start
+		public DateTime? LastAuthorizationDate { get; set; }
+
     }
 }

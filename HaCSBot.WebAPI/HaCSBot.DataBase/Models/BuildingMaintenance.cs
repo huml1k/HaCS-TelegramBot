@@ -8,8 +8,8 @@ namespace HaCSBot.DataBase.Models
         public MaintenanceTypes Type { get; set; }
         public string Description { get; set; }
         public StatusMaintenance Status { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime PlannedEndDate { get; set; }
+        public DateTime? CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime? PlannedEndDate { get; set; }
 
         public Guid BuildingId { get; set; }
         public Guid AdminId { get; set; }
