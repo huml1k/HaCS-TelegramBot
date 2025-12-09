@@ -16,14 +16,16 @@ namespace HaCSBot.DataBase
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<BuildingMaintenance> BuildingMaintenances { get; set; }
         public DbSet<Apartment> Apartments { get; set; }
+		public DbSet<NotificationDelivery> NotificationDeliveries { get; set; }
+		public DbSet<Complaint> Complaints { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new ApartmentConfiguration());
             modelBuilder.ApplyConfiguration(new BuildingConfiguration());
             modelBuilder.ApplyConfiguration(new BuildingMaintenanceConfiguration());
             modelBuilder.ApplyConfiguration(new NotificationConfiguration());
             modelBuilder.ApplyConfiguration(new UserConfiguration());
-        }
+		}
     }
 }

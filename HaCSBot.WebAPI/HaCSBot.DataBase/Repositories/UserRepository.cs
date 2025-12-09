@@ -13,46 +13,40 @@ namespace HaCSBot.DataBase.Repositories
             _context = context;
         }
 
-        public async Task Create(User entity)
-        {
-            await _context.Users.AddAsync(entity);
-            await _context.SaveChangesAsync();
-        }
+		public async Task<bool> ExistsByTelegramIdAsync(long telegramId)
+		{
+			return await _context.Users.AnyAsync(u => u.TelegramId == telegramId);
+		}
 
-        public async Task Delete(Guid id)
-        {
-            var entity = await GetById(id);
-            if (entity != null)
-            {
-                _context.Users.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task<IEnumerable<User>> GetAll()
-        {
+		public async Task<IEnumerable<User>> GetAllAsync()
+		{
             return await _context.Users.ToListAsync();
         }
 
-        public async Task<User> GetById(Guid id)
-        {
+		public async Task<User?> GetByIdAsync(Guid id)
+		{
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<IEnumerable<User>> GetByRoleAsync(Roles role)
+		public async Task<User?> GetByPhoneAsync(string phone)
+		{
+            return await _context.Users.FirstOrDefaultAsync(u => u.Phone == phone);
+		}
+
+		public async Task<IEnumerable<User>> GetByRoleAsync(Roles role)
         {
             return await _context.Users.Where(u => u.Role == role).ToListAsync();
         }
 
-        public async Task<User> GetByTelegramIdAsync(long telegramId)
+        public async Task<User?> GetByTelegramIdAsync(long telegramId)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.UserId == telegramId);
+            return await _context.Users.FirstOrDefaultAsync(u => u.TelegramId == telegramId);
         }
 
-        public async Task Update(User entity)
-        {
+        public async Task UpdateAsync(User entity)
+		{
             _context.Users.Update(entity);
             await _context.SaveChangesAsync();
         }
-    }
+	}
 }

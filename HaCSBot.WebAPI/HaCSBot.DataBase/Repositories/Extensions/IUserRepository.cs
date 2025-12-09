@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HaCSBot.DataBase.Repositories.Extensions
 {
-    public interface IUserRepository : IGenericRepository<User>
+    public interface IUserRepository
     {
         public Task<User> GetByTelegramIdAsync(long telegramId);
-        public Task<IEnumerable<User>> GetByRoleAsync(Roles role);
-		public Task Create(User entity);
-		public Task Delete(Guid id);
-		public Task<IEnumerable<User>> GetAll();
-		public Task<User> GetById(Guid id);
-		public Task Update(User entity);
+		public Task<bool> ExistsByTelegramIdAsync(long telegramId);
+		public Task<IEnumerable<User>> GetByRoleAsync(Roles role);
+		public Task<IEnumerable<User>> GetAllAsync();
+		public Task<User> GetByIdAsync(Guid id);
+		public Task UpdateAsync(User entity);
+		public Task<User> GetByPhoneAsync(string phone);
 
 	}
 }

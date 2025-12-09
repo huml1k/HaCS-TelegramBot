@@ -9,8 +9,7 @@ namespace HaCSBot.DataBase.Configurations
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.ToTable("Users");
-            builder.HasKey(u => u.Id);
-            builder.Property(u => u.UserId).IsRequired(); 
+            builder.HasKey(u => u.Id); 
             builder.Property(u => u.FirstName).IsRequired().HasMaxLength(50);
             builder.Property(u => u.LastName).IsRequired().HasMaxLength(50);
             builder.Property(u => u.MiddleName).HasMaxLength(50);
@@ -24,7 +23,6 @@ namespace HaCSBot.DataBase.Configurations
                    .HasForeignKey(a => a.UserId)
                    .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasIndex(u => u.UserId).IsUnique();
         }
     }
 }

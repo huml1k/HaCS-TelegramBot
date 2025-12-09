@@ -2,21 +2,25 @@
 
 namespace HaCSBot.DataBase.Models
 {
-    public class Notification
-    {
-        public Guid ID { get; set; }
-        public DateTime? SentDate { get; set; } = DateTime.UtcNow;
-        public NotificationType Type { get; set; }
-        public string Message { get; set; }
+	public class Notification
+	{
+		public Guid Id { get; set; }
+		public NotificationType Type { get; set; }
+		public string Title { get; set; } = string.Empty;
+		public string Message { get; set; } = string.Empty;
+		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+		public DateTime? ScheduledSendDate { get; set; }  // для отложенных
+		public Guid? BuildingId { get; set; }              // может быть null (на все дома)
+		public Guid? BuildingMaintenanceId { get; set; }   // опционально привязано к работам
+		public Guid CreatedByUserId { get; set; }          // кто создал (админ)
 
-        public Guid BuildingId { get; set; }
-        public Guid BuildingMaintenanceId { get; set; }
-        public Building  House { get; set; }
-        public BuildingMaintenance BuildingMaintenance { get; set; }
+		public Building? Building { get; set; }
+		public BuildingMaintenance? BuildingMaintenance { get; set; }
+		public User CreatedByUser { get; set; } = null!;
 
-        public static Notification Create(Notification notification) 
-        {
-            throw new Exception();
-        }
-    }
+		// Файлы
+		public List<NotificationAttachment> Attachments { get; set; } = [];
+
+		public List<NotificationDelivery> Deliveries { get; set; } = new();
+	}
 }

@@ -1,9 +1,11 @@
 ﻿namespace HaCSBot.DataBase.Enums
 {
     public enum StatusMaintenance
-    {
-        Обработка,
-        Решено,
-        Отклонено
-    }
+	{
+		Planned = 0,       // Запланировано
+		InProgress = 1,    // В работе
+		Paused = 2,        // Приостановлено
+		Completed = 3,     // Завершено
+		Cancelled = 4      // Отменено
+	}
 }
