@@ -2,7 +2,6 @@
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
 
 namespace HaCSBot.DataBase.Repositories
 {

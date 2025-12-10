@@ -5,11 +5,11 @@ using HaCSBot.Services.Services.Extensions;
 
 namespace HaCSBot.Services.Services
 {
-    public class BuildingMaintenanceService : IBuildingService
+    public class BuildingService : IBuildingService
     {
-        private readonly IBuildingMaintenanceRepository _repository;
+        private readonly IBuildingRepository _repository;
 
-        public BuildingMaintenanceService(IBuildingMaintenanceRepository repository)
+        public BuildingService(IBuildingRepository repository)
         {
             _repository = repository;
         }
@@ -59,4 +59,5 @@ namespace HaCSBot.Services.Services
             throw new NotImplementedException();
         }
     }
+
 }

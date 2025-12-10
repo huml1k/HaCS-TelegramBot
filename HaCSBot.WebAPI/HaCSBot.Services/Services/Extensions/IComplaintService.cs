@@ -1,9 +1,9 @@
 ﻿using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
 
-namespace HaCSBot.DataBase.Repositories.Extensions
+namespace HaCSBot.Services.Services.Extensions
 {
-	public interface IComplaintRepository
+	public interface IComplaintService
 	{
 		Task AddAsync(Complaint complaint);
 		Task UpdateAsync(Complaint complaint);

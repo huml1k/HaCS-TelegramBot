@@ -1,6 +1,5 @@
 ﻿using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace HaCSBot.DataBase.Repositories.Extensions
 {

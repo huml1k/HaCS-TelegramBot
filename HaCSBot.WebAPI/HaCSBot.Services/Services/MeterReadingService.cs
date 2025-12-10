@@ -3,13 +3,13 @@ using HaCSBot.Services.Services.Extensions;
 
 namespace HaCSBot.Services.Services
 {
-    public class UserService : IUserService
+    public class MeterReadingService : IMeterReadingService
     {
-        private readonly IUserRepository _repository;
+        private readonly IMeterReadingRepository _repository;
 
-        public UserService(IUserRepository repository) 
+        public MeterReadingService(IMeterReadingRepository repository)
         {
             _repository = repository;
         }
-	}
+    }
 }

@@ -1,9 +1,4 @@
 ﻿using HaCSBot.DataBase.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HaCSBot.DataBase.Models
 {
@@ -18,3 +13,4 @@ namespace HaCSBot.DataBase.Models
 		public string? Caption { get; set; }               
 	}
 }
+	

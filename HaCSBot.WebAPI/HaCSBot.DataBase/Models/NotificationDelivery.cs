@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace HaCSBot.DataBase.Models
+﻿namespace HaCSBot.DataBase.Models
 {
 	// Доставка и статус прочтения 
 	public class NotificationDelivery
