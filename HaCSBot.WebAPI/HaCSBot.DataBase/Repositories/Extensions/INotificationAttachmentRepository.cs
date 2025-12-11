@@ -5,7 +5,7 @@ namespace HaCSBot.DataBase.Repositories.Extensions
 {
     public interface INotificationAttachmentRepository
     {
-        public Task<NotificationAttachment> GetByIdAsync(Guid id);
+        public Task<NotificationAttachment?> GetByIdAsync(Guid id);
         public Task<IEnumerable<NotificationAttachment>> GetByTypeAsync(AttachmentType attachmentType);
         public Task<IEnumerable<NotificationAttachment>> GetByTelegramFileIdAsync(string telegramFileId);
         public Task<IEnumerable<NotificationAttachment>> GetAllAsync();

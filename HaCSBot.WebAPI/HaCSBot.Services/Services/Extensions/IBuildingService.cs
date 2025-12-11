@@ -1,19 +1,15 @@
 ﻿using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
+using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services.Extensions
 {
     public interface IBuildingService 
     {
-		public Task<Building> GetByIdAsync(Guid id);
-		public Task<Building> GetByFullAddressAsync(StreetsType streetType, string streetName, string buildingNumber);
-		public Task<List<Building>> GetAllAsync();
-		public Task<List<Building>> GetAllWithApartmentsAsync();
-		public Task AddAsync(Building building);
-		public Task UpdateAsync(Building building);
-		public Task DeleteAsync(Guid id);
-		public Task<bool> ExistsAsync(Guid id);
-		public Task<List<Building>> GetBuildingsByUserIdAsync(Guid userId); 
+        //public Task<BuildingDto?> FindBuildingByAddressAsync(string fullAddress);
+        public Task<List<BuildingDto>> GetAdminBuildingsAsync(Guid adminUserId);
+        public Task<List<ApartmentDto>> GetApartmentsInBuildingAsync(Guid buildingId);
+        public Task<List<ApartmentDto>> GetFreeApartmentsAsync(Guid buildingId);
 
-	}
+    }
 }

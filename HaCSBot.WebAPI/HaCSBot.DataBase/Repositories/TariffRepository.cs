@@ -44,12 +44,11 @@ namespace HaCSBot.DataBase.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<IEnumerable<Tariff>> GetByTypeAsync(TariffType tariffType)
+        public async Task<Tariff?> GetByTypeAsync(TariffType tariffType)
         {
             return await _context.Tariffs
                 .AsNoTracking()
-                .Where(x => x.Type == tariffType)
-                .ToListAsync();
+                .FirstOrDefaultAsync(x => x.Type == tariffType);
         }
 
         public async Task UpdateAsync(Tariff entity)

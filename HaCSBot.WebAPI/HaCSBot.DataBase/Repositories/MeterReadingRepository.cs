@@ -36,11 +36,28 @@ namespace HaCSBot.DataBase.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<MeterReading>> GetByApartmentIdAsync(Guid apartmentId)
+        {
+            return await _context.MeterReading
+                .AsNoTracking()
+                .Where(x => x.ApartmentId == apartmentId)
+                .ToListAsync();
+        }
+
         public async Task<MeterReading?> GetByIdAsync(Guid id)
         {
             return await _context.MeterReading
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<MeterReading?> GetLatestByTypeAsync(Guid apartmentId, MeterType meterType)
+        {
+            return await _context.MeterReading
+                .AsNoTracking()
+                .Where(x => x.ApartmentId == apartmentId && x.Type == meterType)
+                .OrderByDescending(x => x.SubmittedByUserId)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<MeterReading>> GetMeterReadingByType(MeterType meterType)

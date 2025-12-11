@@ -31,9 +31,9 @@ namespace HaCSBot.DataBase.Repositories
 
         public async Task<IEnumerable<ComplaintAttachment>> GetAllAsync()
         {
-            return _context.ComplaintAttachments
+            return await _context.ComplaintAttachments
                 .AsNoTracking()
-                .ToList();
+                .ToListAsync();
         }
 
         public async Task<ComplaintAttachment?> GetByIdAsync(Guid id)

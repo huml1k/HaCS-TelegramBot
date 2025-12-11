@@ -2,61 +2,67 @@
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
+using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {
     public class BuildingService : IBuildingService
     {
-        private readonly IBuildingRepository _repository;
+        private readonly IBuildingRepository _buildingRepository;
+        private readonly IApartmentRepository _apartmentRepository;
 
-        public BuildingService(IBuildingRepository repository)
+        public BuildingService(IBuildingRepository buildingRepository, IApartmentRepository apartmentRepository)
         {
-            _repository = repository;
+            _buildingRepository = buildingRepository;
+            _apartmentRepository = apartmentRepository;
         }
 
-        public Task AddAsync(Building building)
+        //public async Task<BuildingDto?> FindBuildingByAddressAsync(string fullAddress)
+        //{
+        //    // Парсинг fullAddress на StreetType, StreetName, BuildingNumber (реализуйте парсер)
+        //    // Пример: assume parsed
+        //    //var streetType = StreetsType.; // Парсинг
+        //    //var streetName = "Ленина";
+        //    //var buildingNumber = "25";
+        //    //var building = await _buildingRepository.GetByFullAddressAsync(streetType, streetName, buildingNumber);
+        //    //if (building == null) return null;
+
+        //    //return new BuildingDto
+        //    //{
+        //    //    Id = building.Id,
+        //    //    FullAddress = $"{building.StreetType} {building.StreetName}, {building.BuildingNumber}"
+        //    //};
+        //}
+
+        public async Task<List<BuildingDto>> GetAdminBuildingsAsync(Guid adminUserId)
         {
-            throw new NotImplementedException();
+            var buildings = await _buildingRepository.GetBuildingsByUserIdAsync(adminUserId);
+            return buildings.Select(b => new BuildingDto
+            {
+                Id = b.Id,
+                FullAddress = $"{b.StreetType} {b.StreetName}, {b.BuildingNumber}"
+            }).ToList();
         }
 
-        public Task DeleteAsync(Guid id)
+        public async Task<List<ApartmentDto>> GetApartmentsInBuildingAsync(Guid buildingId)
         {
-            throw new NotImplementedException();
+            var apartments = await _apartmentRepository.GetApartmentsByBuildingIdAsync(buildingId);
+            return apartments.Select(a => new ApartmentDto
+            {
+                Id = a.Id,
+                Number = a.ApartmentNumber,
+                OwnerName = a.User != null ? $"{a.User.FirstName} {a.User.LastName}" : "Свободна"
+            }).ToList();
         }
 
-        public Task<bool> ExistsAsync(Guid id)
+        public async Task<List<ApartmentDto>> GetFreeApartmentsAsync(Guid buildingId)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<Building>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<Building>> GetAllWithApartmentsAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<Building>> GetBuildingsByUserIdAsync(Guid userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Building> GetByFullAddressAsync(StreetsType streetType, string streetName, string buildingNumber)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Building> GetByIdAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task UpdateAsync(Building building)
-        {
-            throw new NotImplementedException();
+            var apartments = await _apartmentRepository.GetUnoccupiedApartmentsAsync(buildingId);
+            return apartments.Select(a => new ApartmentDto
+            {
+                Id = a.Id,
+                Number = a.ApartmentNumber
+            }).ToList();
         }
     }
 

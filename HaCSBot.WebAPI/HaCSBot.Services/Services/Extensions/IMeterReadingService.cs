@@ -1,16 +1,12 @@
-﻿using HaCSBot.DataBase.Enums;
-using HaCSBot.DataBase.Models;
+﻿using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services.Extensions
 {
     public interface IMeterReadingService
     {
-        public Task<MeterReading> GetByIdAsync(Guid id);
-        public Task<IEnumerable<MeterReading>> GetMeterReadingByType(MeterType meterType);
-        public Task<IEnumerable<MeterReading>> GetSubmittedByUserId(Guid id);
-        public Task<IEnumerable<MeterReading>> GetAllAsync();
-        public Task AddAsync(MeterReading entity);
-        public Task UpdateAsync(MeterReading entity);
-        public Task DeleteAsync(Guid id);
+        public Task SubmitMeterReadingAsync(SubmitReadingDto dto, long telegramId);
+        public Task<List<MeterReadingDto>> GetLastReadingsAsync(Guid apartmentId);
+        public Task<List<MeterReadingHistoryDto>> GetHistoryAsync(Guid apartmentId, int months = 12);
+        public Task<ConsumptionDto> GetCurrentConsumptionAsync(Guid apartmentId);
     }
 }

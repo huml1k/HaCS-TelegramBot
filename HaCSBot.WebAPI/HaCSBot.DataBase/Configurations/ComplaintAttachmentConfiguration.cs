@@ -29,3 +29,4 @@ namespace HaCSBot.DataBase.Configurations
                    .OnDelete(DeleteBehavior.Cascade);
         }
     }
+}

@@ -1,21 +1,16 @@
 ﻿using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
+using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services.Extensions
 {
 	public interface IComplaintService
 	{
-		Task AddAsync(Complaint complaint);
-		Task UpdateAsync(Complaint complaint);
-		Task<Complaint?> GetByIdAsync(Guid id);
-		Task<Complaint?> GetByIdWithDetailsAsync(Guid id);
-		Task<List<Complaint>> GetByApartmentIdAsync(Guid apartmentId);
-		Task<List<Complaint>> GetByBuildingIdAsync(Guid buildingId, int page = 1, int pageSize = 20);
-		Task<List<Complaint>> GetActiveForBuildingAsync(Guid buildingId);
-		Task<List<Complaint>> GetByUserTelegramIdAsync(long telegramId);
-		Task ChangeStatusAsync(Guid complaintId, ComplaintStatus newStatus);
-		Task<List<Complaint>> GetUnprocessedAsync();
-		Task DeleteAsync(Guid id);
-		Task<bool> ExistsAsync(Guid id);
-	}
+        public Task<Guid> CreateComplaintAsync(CreateComplaintDto dto, long telegramId);
+        public Task<List<ComplaintDto>> GetMyComplaintsAsync(long telegramId);
+        public Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId);
+        public Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId);
+        public Task ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId);
+        public Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId);
+    }
 }

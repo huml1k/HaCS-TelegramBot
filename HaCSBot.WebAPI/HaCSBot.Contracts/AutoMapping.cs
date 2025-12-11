@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using HaCSBot.Contracts.Contracts;
 using HaCSBot.DataBase.Models;
 
 namespace HaCSBot.Contracts
@@ -8,7 +7,7 @@ namespace HaCSBot.Contracts
     {
         public AutoMapping() 
         {
-            this.CreateMap<UserRegistrationContract, User>();
+            
         }
     }
 }

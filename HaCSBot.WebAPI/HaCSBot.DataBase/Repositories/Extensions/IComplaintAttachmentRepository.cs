@@ -5,7 +5,7 @@ namespace HaCSBot.DataBase.Repositories.Extensions
 {
     public interface IComplaintAttachmentRepository
     {
-        public Task<ComplaintAttachment> GetByIdAsync(Guid id);
+        public Task<ComplaintAttachment?> GetByIdAsync(Guid id);
         public Task<IEnumerable<ComplaintAttachment>> GetByTypeAsync(AttachmentType attachmentType);
         public Task<IEnumerable<ComplaintAttachment>> GetByTelegramFileIdAsync(string telegramFileId);
         public Task<IEnumerable<ComplaintAttachment>> GetAllAsync();
