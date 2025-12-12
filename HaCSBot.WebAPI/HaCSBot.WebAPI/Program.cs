@@ -29,8 +29,25 @@ namespace HaCSBot.WebAPI
 			builder.Services.AddScoped<UpdateHandler>();
 			builder.Services.AddSingleton<IUserStateService, InMemoryUserStateService>();
 			builder.Services.AddScoped<IUserService, UserService>();
-			builder.Services.AddScoped<IUserRepository, UserRepository>();
-			builder.Services.AddControllers();
+            builder.Services.AddScoped<IBuildingService, BuildingService>();
+            builder.Services.AddScoped<IComplaintService, ComplaintService>();
+            builder.Services.AddScoped<IFileService, FileService>();
+            builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<ITariffService, TariffService>();
+
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IApartmentRepository, ApartmentRepository>();
+            builder.Services.AddScoped<IBuildingMaintenanceRepository, BuildingMaintenanceRepository>();
+            builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
+            builder.Services.AddScoped<IComplaintAttachmentRepository, ComplaintAttachmentRepository>();
+            builder.Services.AddScoped<IComplaintRepository, ComplaintRepository>();
+            builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
+            builder.Services.AddScoped<INotificationAttachmentRepository, NotificationAttachmentRepository>();
+            builder.Services.AddScoped<INotificationDeliveryRepository, NotificationDeliveryRepository>();
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<ITariffRepository, TariffRepository>();
+            builder.Services.AddControllers();
 
 			builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

@@ -12,7 +12,9 @@ namespace HaCSBot.Services.Services
         private readonly IApartmentRepository _apartmentRepository;
         private readonly IUserRepository _userRepository;
 
-        public ComplaintService(IComplaintRepository complaintRepository, IApartmentRepository apartmentRepository, IUserRepository userRepository)
+        public ComplaintService(IComplaintRepository complaintRepository,
+            IApartmentRepository apartmentRepository,
+            IUserRepository userRepository)
         {
             _complaintRepository = complaintRepository;
             _apartmentRepository = apartmentRepository;

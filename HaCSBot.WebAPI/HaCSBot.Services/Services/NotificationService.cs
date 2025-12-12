@@ -13,7 +13,11 @@ namespace HaCSBot.Services.Services
         private readonly IUserRepository _userRepository;
         private readonly INotificationDeliveryRepository _deliveryRepository;
 
-        public NotificationService(INotificationRepository notificationRepository, IBuildingRepository buildingRepository, IApartmentRepository apartmentRepository, IUserRepository userRepository, INotificationDeliveryRepository deliveryRepository)
+        public NotificationService(INotificationRepository notificationRepository,
+            IBuildingRepository buildingRepository,
+            IApartmentRepository apartmentRepository,
+            IUserRepository userRepository,
+            INotificationDeliveryRepository deliveryRepository)
         {
             _notificationRepository = notificationRepository;
             _buildingRepository = buildingRepository;

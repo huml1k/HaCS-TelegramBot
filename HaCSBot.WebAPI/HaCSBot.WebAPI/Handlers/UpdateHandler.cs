@@ -4,7 +4,6 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -16,8 +15,6 @@ namespace HaCSBot.WebAPI.Handlers
 		private readonly ILogger<UpdateHandler> _logger;
 		private readonly IUserStateService _userState;     
 		private readonly IUserService _userService;
-        //Это что ??
-		private static readonly InputPollOption[] PollOptions = ["Hello", "World!"];
 
 		public UpdateHandler(
 			ITelegramBotClient bot,
@@ -34,7 +31,6 @@ namespace HaCSBot.WebAPI.Handlers
         public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource source, CancellationToken cancellationToken)
         {
             _logger.LogInformation("HandleError: {Exception}", exception);
-            // Cooldown in case of network connection error
             if (exception is RequestException)
                 await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
         }
@@ -49,12 +45,6 @@ namespace HaCSBot.WebAPI.Handlers
                 { CallbackQuery: { } callbackQuery } => OnCallbackQuery(callbackQuery),
                 { InlineQuery: { } inlineQuery } => OnInlineQuery(inlineQuery),
                 { ChosenInlineResult: { } chosenInlineResult } => OnChosenInlineResult(chosenInlineResult),
-                { Poll: { } poll } => OnPoll(poll),
-                { PollAnswer: { } pollAnswer } => OnPollAnswer(pollAnswer),
-                // ChannelPost:
-                // EditedChannelPost:
-                // ShippingQuery:
-                // PreCheckoutQuery:
                 _ => UnknownUpdateHandlerAsync(update)
             });
         }
@@ -113,7 +103,7 @@ namespace HaCSBot.WebAPI.Handlers
 		}
 
 		// Проверка — уже авторизован ли этот Telegram ID
-		private async Task<HaCSBot.DataBase.Models.User?> GetAuthorizedUserAsync(long telegramId)
+		private async Task<DataBase.Models.User?> GetAuthorizedUserAsync(long telegramId)
 		{
 			return await _userService.GetByTelegramIdAsync(telegramId);
 		}
@@ -279,30 +269,30 @@ namespace HaCSBot.WebAPI.Handlers
 
 		private async Task ShowMainMenu(HaCSBot.DataBase.Models.User? user, long chatId)
 		{
-			if (user == null)
-			{
-				await SendRegistrationButton(chatId);
-				return;
-			}
+            var role = user?.Role;
 
-			if (user.Role == 0)
-			{
-				await _bot.SendMessage(chatId, "Вы администратор\n\nПанель управления в разработке...");
-				return;
-			}
-
-			var keyboard = new ReplyKeyboardMarkup(new[]
-			{
-				new KeyboardButton("Сообщить о проблеме"),
-				new KeyboardButton("Передача показаний счётчиков"),
-				new KeyboardButton("Тарифы")
-			})
-			{
-				ResizeKeyboard = true
-			};
-
-			await _bot.SendMessage(chatId, "Главное меню жителя:", replyMarkup: keyboard);
-		}
+            switch (role)
+            {
+                case null:
+                    await SendRegistrationButton(chatId);
+                    return;
+                case 0:
+                    await _bot.SendMessage(chatId, "Вы администратор\n\nПанель управления в разработке...");
+                    return;
+                default:
+                    var keyboard = new ReplyKeyboardMarkup(new[]
+                    {
+						new KeyboardButton("Сообщить о проблеме"),
+						new KeyboardButton("Передача показаний счётчиков"),
+						new KeyboardButton("Тарифы")
+					})
+                    {
+                        ResizeKeyboard = true
+                    };
+                    await _bot.SendMessage(chatId, "Главное меню жителя:", replyMarkup: keyboard);
+                    break;
+            }
+        }
 
 		private string NormalizePhone(string phone)
 		{
@@ -334,20 +324,6 @@ namespace HaCSBot.WebAPI.Handlers
         }
 
         #endregion
-
-        private Task OnPoll(Poll poll)
-        {
-            _logger.LogInformation("Received Poll info: {Question}", poll.Question);
-            return Task.CompletedTask;
-        }
-
-        private async Task OnPollAnswer(PollAnswer pollAnswer)
-        {
-            var answer = pollAnswer.OptionIds.FirstOrDefault();
-            var selectedOption = PollOptions[answer];
-            if (pollAnswer.User != null)
-                await _bot.SendMessage(pollAnswer.User.Id, $"You've chosen: {selectedOption.Text} in poll");
-        }
 
         private Task UnknownUpdateHandlerAsync(Update update)
         {

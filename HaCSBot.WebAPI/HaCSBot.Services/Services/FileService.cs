@@ -1,6 +1,7 @@
 ﻿using HaCSBot.DataBase.Enums;
 using HaCSBot.Services.Services.Extensions;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
@@ -8,23 +9,23 @@ namespace HaCSBot.Services.Services
     public class FileService : IFileService
     {
         // Предполагаем интеграцию с Telegram.Bot client
-        private readonly Telegram.Bot.TelegramBotClient _botClient;
+        private readonly ITelegramBotClient _botClient;
 
-        public FileService(Telegram.Bot.TelegramBotClient botClient)
+        public FileService(ITelegramBotClient botClient)
         {
             _botClient = botClient;
         }
 
-        //public async Task<AttachmentInfo> SaveFileFromTelegramAsync(IInputFile file, AttachmentType type)
-        //{
-        //    //Логика загрузки файла в Telegram и получения FileId
-        //    //var uploaded = await _botClient.Uplo(file); // Псевдокод
-        //    //return new AttachmentInfo
-        //    //{
-        //    //    TelegramFileId = uploaded.FileId,
-        //    //    Type = type
-        //    //};
-        //}
+        public async Task<AttachmentInfo> SaveFileFromTelegramAsync(long chatId, InputFile file, AttachmentType type)
+        {
+            //Логика загрузки файла в Telegram и получения FileId
+            var uploaded = await _botClient.SendDocument(chatId, file); // Псевдокод
+            return new AttachmentInfo
+            {
+                TelegramFileId = uploaded.Document.FileId,
+                Type = type
+            };
+        }
 
         public async Task SendFileAsync(long telegramId, AttachmentInfo attachment)
         {

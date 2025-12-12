@@ -1,4 +1,5 @@
-﻿using HaCSBot.DataBase.Enums;
+﻿using AutoMapper;
+using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
@@ -10,8 +11,11 @@ namespace HaCSBot.Services.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IApartmentRepository _apartmentRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IApartmentRepository apartmentRepository)
+        public UserService(IUserRepository userRepository,
+            IApartmentRepository apartmentRepository,
+            IMapper mapper)
         {
             _userRepository = userRepository;
             _apartmentRepository = apartmentRepository;
@@ -99,5 +103,35 @@ namespace HaCSBot.Services.Services
             // Пока просто проверка
             await Task.CompletedTask;
         }
+
+        public async Task<User?> FindByPersonalDataAsync(string firstName, string lastName, string phone)
+        {
+            var normalizedPhone = NormalizePhone(phone);
+
+            var allUsers = await _userRepository.GetAllAsync();
+
+            return allUsers.FirstOrDefault(u =>
+                u.FirstName.Trim() == firstName.Trim() &&
+                u.LastName.Trim() == lastName.Trim() &&
+                NormalizePhone(u.Phone) == normalizedPhone);
+        }
+
+        private static string NormalizePhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return "";
+            return phone.Replace("+", "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+        }
+
+        public async Task<User?> GetByTelegramIdAsync(long telegramId)
+        {
+            var allUsers = await _userRepository.GetAllAsync();
+            return allUsers.FirstOrDefault(u => u.TelegramId == telegramId && u.IsAuthorizedInBot);
+        }
+
+        public async Task UpdateUserAsync(User user)
+        {
+            await _userRepository.UpdateAsync(user);
+        }
     }
 }
+
