@@ -10,7 +10,7 @@ namespace HaCSBot.Services.Services.Extensions
         public Task<List<ComplaintDto>> GetMyComplaintsAsync(long telegramId);
         public Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId);
         public Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId);
-        public Task ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId);
+        public Task<ComplaintStatus> ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId);
         public Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId);
     }
 }

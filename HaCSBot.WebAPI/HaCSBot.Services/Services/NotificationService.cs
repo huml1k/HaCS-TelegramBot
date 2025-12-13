@@ -61,7 +61,7 @@ namespace HaCSBot.Services.Services
                             NotificationId = notificationId,
                             TelegramUserId = user.TelegramId.Value,
                             DeliveredDate = DateTime.UtcNow,
-                            SentDate = DateTime.UtcNow // Предполагаем отправку
+                            SentDate = DateTime.UtcNow 
                         };
                         await _deliveryRepository.AddAsync(delivery);
                     }

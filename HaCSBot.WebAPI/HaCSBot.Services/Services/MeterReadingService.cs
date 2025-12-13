@@ -11,7 +11,8 @@ namespace HaCSBot.Services.Services
         private readonly IApartmentRepository _apartmentRepository;
         private readonly IUserRepository _userRepository;
 
-        public MeterReadingService(IMeterReadingRepository meterReadingRepository,
+        public MeterReadingService(
+            IMeterReadingRepository meterReadingRepository,
             IApartmentRepository apartmentRepository,
             IUserRepository userRepository)
         {

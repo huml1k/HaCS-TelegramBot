@@ -69,17 +69,17 @@ namespace HaCSBot.DataBase.Repositories
 
 		public async Task<Building?> GetByFullAddressAsync(StreetsType streetType, string streetName, string buildingNumber)
 		{
-			var normalizedStreet = streetName.Trim().ToLowerInvariant();
-			var normalizedNumber = buildingNumber.Trim();
+            var normalizedStreet = streetName.Trim();  
+            var normalizedNumber = buildingNumber.Trim();
 
-			return await _context.Buildings
-				.AsNoTracking()
-				.Include(b => b.Apartments).ThenInclude(a => a.User)
-				.FirstOrDefaultAsync(b =>
-					b.StreetType == streetType &&
-					b.StreetName.Trim().ToLowerInvariant() == normalizedStreet &&
-					b.BuildingNumber.Trim() == normalizedNumber);
-		}
+            return await _context.Buildings
+                .AsNoTracking()
+                .Include(b => b.Apartments).ThenInclude(a => a.User)
+                .FirstOrDefaultAsync(b =>
+                    b.StreetType == streetType &&
+                    b.StreetName == normalizedStreet &&  
+                    b.BuildingNumber.Trim() == normalizedNumber);
+        }
 
 		public async Task<Building?> GetByIdAsync(Guid id)
 		{

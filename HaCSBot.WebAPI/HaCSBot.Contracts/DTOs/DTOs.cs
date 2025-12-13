@@ -97,7 +97,7 @@ namespace HaCSBot.Contracts.DTOs
         public class TariffDto
         {
             public TariffType Type { get; set; }
-            public decimal Rate { get; set; } // Предполагаемое поле
+            public decimal Price { get; set; } // Предполагаемое поле
         }
 
         // Для IMeterReadingService

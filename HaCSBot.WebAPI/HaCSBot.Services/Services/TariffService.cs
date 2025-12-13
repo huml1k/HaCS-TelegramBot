@@ -22,7 +22,7 @@ namespace HaCSBot.Services.Services
             return tariffs.Select(t => new TariffDto
             {
                 Type = t.Type,
-                Rate = t.Price 
+                Price = t.Price 
             }).ToList();
         }
 
@@ -33,7 +33,7 @@ namespace HaCSBot.Services.Services
 
             var previousReading = await _meterReadingRepository.GetLatestByTypeAsync(apartmentId, readingDto.Type);
             decimal consumption = readingDto.Value - (previousReading?.Value ?? 0);
-            return consumption * tariff.Price; // Простой расчет
+            return consumption * tariff.Price; 
         }
     }
 }

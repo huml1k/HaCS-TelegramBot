@@ -1,0 +1,6 @@
+services:
+  hacsbot.webapi:
+    image: ${DOCKER_REGISTRY-}hacsbotwebapi
+    build:
+      context: .
+      dockerfile: HaCSBot.WebAPI/Dockerfile

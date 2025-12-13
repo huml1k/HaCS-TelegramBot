@@ -8,6 +8,7 @@
 		ElectricityNight = 3,	// Электроэнергия (ночь)
 		ElectricitySingle = 4,  // Электроэнергия (однотарифный)
 		Gas = 5,				// Газ
-		Heating = 6				// Отопление 
+		Heating = 6,		    // Отопление 
+		None = 7
 	}
 }

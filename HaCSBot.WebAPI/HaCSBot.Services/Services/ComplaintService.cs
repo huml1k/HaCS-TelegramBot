@@ -56,7 +56,7 @@ namespace HaCSBot.Services.Services
         public async Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId)
         {
             var complaints = await _complaintRepository.GetUnprocessedAsync();
-            // Фильтр по домам админа, если нужно
+
             return complaints.Select(c => new ComplaintDto
             {
                 Id = c.Id,
@@ -74,10 +74,10 @@ namespace HaCSBot.Services.Services
             }).ToList();
         }
 
-        public async Task ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId)
+        public async Task<ComplaintStatus> ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId)
         {
             await _complaintRepository.ChangeStatusAsync(complaintId, status);
-            // Уведомление жильцу (интеграция с NotificationService)
+            return status;
         }
 
         public async Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId)

@@ -8,7 +8,6 @@ namespace HaCSBot.Services.Services
 {
     public class FileService : IFileService
     {
-        // Предполагаем интеграцию с Telegram.Bot client
         private readonly ITelegramBotClient _botClient;
 
         public FileService(ITelegramBotClient botClient)

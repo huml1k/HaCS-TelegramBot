@@ -24,7 +24,13 @@ namespace HaCSBot.WebAPI
 			builder.Services.AddDbContext<MyApplicationDbContext>(options =>
 				options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-			builder.Services.AddAutoMapper(typeof(Program));
+            //builder.Services.AddStackExchangeRedisCache(options =>
+            //{
+            //    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+            //    options.InstanceName = "HaCSBot_";
+            //});
+
+            builder.Services.AddAutoMapper(typeof(Program));
 
 			builder.Services.AddScoped<UpdateHandler>();
 			builder.Services.AddSingleton<IUserStateService, InMemoryUserStateService>();
@@ -35,6 +41,7 @@ namespace HaCSBot.WebAPI
             builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<ITariffService, TariffService>();
+            builder.Services.AddScoped<IApartmentService, ApartmentService>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IApartmentRepository, ApartmentRepository>();
