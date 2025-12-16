@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
+using HaCSBot.Contracts.DTOs;
 using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {
@@ -19,119 +19,125 @@ namespace HaCSBot.Services.Services
         {
             _userRepository = userRepository;
             _apartmentRepository = apartmentRepository;
+			_mapper = mapper;
         }
 
-        public async Task<User?> GetCurrentUserAsync(long telegramId)
-        {
-            return await _userRepository.GetByTelegramIdAsync(telegramId);
-        }
+		public async Task<User?> GetCurrentUserAsync(long telegramId)
+		{
+			return await _userRepository.GetByTelegramIdAsync(telegramId);
+		}
 
-        public async Task<bool> IsUserAuthorizedAsync(long telegramId)
-        {
-            var user = await _userRepository.GetByTelegramIdAsync(telegramId);
-            return user?.IsAuthorizedInBot ?? false;
-        }
+		public async Task<bool> IsUserAuthorizedAsync(long telegramId)
+		{
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			return user?.IsAuthorizedInBot ?? false;
+		}
 
-        //public async Task<AuthorizationResult> RegisterOrLoginAsync(UserRegistrationDto dto)
-        //{
-        //    // Логика регистрации/логина: поиск по телефону, создание пользователя, привязка TelegramId
-        //    var existingUser = await _userRepository.GetByPhoneAsync(dto.Phone);
-        //    if (existingUser != null)
-        //    {
-        //        // Логин: обновить TelegramId и авторизацию
-        //        existingUser.TelegramId = dto.TelegramId;
-        //        existingUser.IsAuthorizedInBot = true;
-        //        existingUser.LastAuthorizationDate = DateTime.UtcNow;
-        //        await _userRepository.UpdateAsync(existingUser);
-        //        return new AuthorizationResult { Success = true, UserId = existingUser.Id };
-        //    }
+		public async Task<AuthorizationResultDto> LoginAsync(UserLoginDto dto)
+		{
+			try
+			{
+				// Ищем пользователя по телефону
+				var user = await _userRepository.GetByPhoneAsync(dto.Phone);
+				if (user == null)
+				{
+					return new AuthorizationResultDto
+					{
+						Success = false
+					};
+				}
 
-        //    // Регистрация нового
-        //    var newUser = new User
-        //    {
-        //        FirstName = dto.FirstName,
-        //        LastName = dto.LastName,
-        //        MiddleName = dto.MiddleName,
-        //        Phone = dto.Phone,
-        //        TelegramId = dto.TelegramId,
-        //        Role = Roles.Resident,
-        //        CreatedDate = DateTime.UtcNow,
-        //        IsAuthorizedInBot = true,
-        //        LastAuthorizationDate = DateTime.UtcNow
-        //    };
-        //    await _userRepository.AddAsync(newUser);
-        //    return new AuthorizationResult { Success = true, UserId = newUser.Id };
-        //}
+				// Проверяем, не привязан ли уже этот TelegramId к другому пользователю
+				var existingUserWithSameTelegram = await _userRepository.GetByTelegramIdAsync(dto.TelegramId);
+				if (existingUserWithSameTelegram != null && existingUserWithSameTelegram.Id != user.Id)
+				{
+					return new AuthorizationResultDto
+					{
+						Success = false
+					};
+				}
 
-        public async Task<List<ApartmentInfoDto>> GetUserApartmentsAsync(long telegramId)
-        {
-            var user = await _userRepository.GetByTelegramIdAsync(telegramId);
-            if (user == null) return new List<ApartmentInfoDto>();
+				// Обновляем данные для авторизации через Telegram
+				user.TelegramId = dto.TelegramId;
+				user.IsAuthorizedInBot = true;
+				user.LastAuthorizationDate = DateTime.UtcNow;
 
-            var apartments = await _apartmentRepository.GetByUserIdAsync(user.Id);
-            return apartments.Select(a => new ApartmentInfoDto
-            {
-                Id = a.Id,
-                Number = a.ApartmentNumber,
-                BuildingAddress = $"{a.Building.StreetType} {a.Building.StreetName}, {a.Building.BuildingNumber}"
-            }).ToList();
-        }
+				await _userRepository.UpdateAsync(user);
 
-        public async Task<UserProfileDto> GetProfileAsync(long telegramId)
-        {
-            var user = await _userRepository.GetByTelegramIdAsync(telegramId);
-            if (user == null) throw new InvalidOperationException("User not found");
+				// Маппим в DTO
+				var userDto = _mapper.Map<UserDto>(user);
 
-            return new UserProfileDto
-            {
-                FullName = $"{user.FirstName} {user.LastName} {user.MiddleName}",
-                Phone = user.Phone,
-                Role = user.Role,
-                Apartments = user.Apartments.Select(a => a.ApartmentNumber).ToList()
-            };
-        }
+				return new AuthorizationResultDto
+				{
+					Success = true,
+					UserId = user.Id
+				};
+			}
+			catch (Exception ex)
+			{
+				return new AuthorizationResultDto
+				{
+					Success = false
+				};
+			}
+		}
 
-        public async Task ChangeApartmentAsync(long telegramId, Guid apartmentId)
-        {
-            var user = await _userRepository.GetByTelegramIdAsync(telegramId);
-            if (user == null) throw new InvalidOperationException("User not found");
+		public async Task<List<ApartmentDto>> GetUserApartmentsAsync(long telegramId)
+		{
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user == null) return new List<ApartmentDto>();
 
-            var apartment = await _apartmentRepository.GetByIdAsync(apartmentId);
-            if (apartment == null || apartment.UserId != user.Id) throw new InvalidOperationException("Apartment not found or not owned");
+			var apartments = await _apartmentRepository.GetByUserIdAsync(user.Id);
+			return _mapper.Map<List<ApartmentDto>>(apartments);
+		}
 
-            // Логика переключения, если нужно (например, установить активную квартиру в user, если добавлено поле)
-            // Пока просто проверка
-            await Task.CompletedTask;
-        }
+		public async Task<UserProfileDto> GetProfileAsync(long telegramId)
+		{
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user == null) return null;
 
-        public async Task<User?> FindByPersonalDataAsync(string firstName, string lastName, string phone)
-        {
-            var normalizedPhone = NormalizePhone(phone);
+			return _mapper.Map<UserProfileDto>(user);
+		}
 
-            var allUsers = await _userRepository.GetAllAsync();
+		public async Task<User?> FindByPhoneAsync(string phone)
+		{
+			return await _userRepository.GetByPhoneAsync(phone);
+		}
 
-            return allUsers.FirstOrDefault(u =>
-                u.FirstName.Trim() == firstName.Trim() &&
-                u.LastName.Trim() == lastName.Trim() &&
-                NormalizePhone(u.Phone) == normalizedPhone);
-        }
+		//private static string NormalizePhone(string phone)
+		//{
+		//	if (string.IsNullOrWhiteSpace(phone)) return "";
+		//	return new string(phone.Where(char.IsDigit).ToArray());
+		//}
 
-        private static string NormalizePhone(string phone)
-        {
-            if (string.IsNullOrWhiteSpace(phone)) return "";
-            return phone.Replace("+", "").Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
-        }
+		public async Task<User> GetByTelegramIdAsync(long telegramId)
+		{
+			return await _userRepository.GetByTelegramIdAsync(telegramId);
+		}
 
-        public async Task<User?> GetByTelegramIdAsync(long telegramId)
-        {
-            var allUsers = await _userRepository.GetAllAsync();
-            return allUsers.FirstOrDefault(u => u.TelegramId == telegramId && u.IsAuthorizedInBot);
-        }
+		public async Task UpdateUserAsync(User user)
+		{
+			await _userRepository.UpdateAsync(user);
+		}
 
-        public async Task UpdateUserAsync(User user)
-        {
-            await _userRepository.UpdateAsync(user);
-        }
-    }
+		public async Task<UserDto> GetUserDtoAsync(long telegramId)
+		{
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user == null) return null;
+
+			return _mapper.Map<UserDto>(user);
+		}
+
+		public async Task LogoutAsync(long telegramId)
+		{
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user != null)
+			{
+				user.IsAuthorizedInBot = false;
+				user.LastAuthorizationDate = DateTime.UtcNow;
+				await _userRepository.UpdateAsync(user);
+			}
+		}
+	}
 }
 

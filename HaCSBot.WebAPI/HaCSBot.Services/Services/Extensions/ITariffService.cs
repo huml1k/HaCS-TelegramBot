@@ -1,4 +1,4 @@
-﻿using static HaCSBot.Contracts.DTOs.DTOs;
+﻿using HaCSBot.Contracts.DTOs;
 
 namespace HaCSBot.Services.Services.Extensions
 {

@@ -6,10 +6,10 @@ namespace HaCSBot.DataBase
 {
     public class MyApplicationDbContext : DbContext
     {
-		public MyApplicationDbContext() { }
-		public MyApplicationDbContext(DbContextOptions options) : base(options)
-        {
-			Database.EnsureCreated();
+		public MyApplicationDbContext(DbContextOptions<MyApplicationDbContext> options)
+			: base(options)
+		{
+			Database.EnsureCreated(); 
 		}
 		public DbSet<User> Users { get; set; }
         public DbSet<Building> Buildings { get; set; }

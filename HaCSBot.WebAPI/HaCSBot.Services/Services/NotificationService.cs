@@ -1,7 +1,7 @@
-﻿using HaCSBot.DataBase.Models;
+﻿using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {

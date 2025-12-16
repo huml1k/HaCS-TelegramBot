@@ -13,6 +13,7 @@ namespace HaCSBot.DataBase.Configurations
             builder.Property(b => b.StreetType).IsRequired(); 
             builder.Property(b => b.StreetName).IsRequired().HasMaxLength(100);
             builder.Property(b => b.BuildingNumber).IsRequired().HasMaxLength(20);
-        }
+
+		}
     }
 }

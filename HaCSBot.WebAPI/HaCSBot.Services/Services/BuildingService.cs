@@ -1,8 +1,9 @@
-﻿using HaCSBot.DataBase.Enums;
+﻿using AutoMapper;
+using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {
@@ -10,150 +11,106 @@ namespace HaCSBot.Services.Services
     {
         private readonly IBuildingRepository _buildingRepository;
         private readonly IApartmentRepository _apartmentRepository;
+        private readonly IMapper _mapper;
 
-        public BuildingService(IBuildingRepository buildingRepository, IApartmentRepository apartmentRepository)
+        public BuildingService(
+            IBuildingRepository buildingRepository,
+            IApartmentRepository apartmentRepository,
+			IMapper mapper)
         {
             _buildingRepository = buildingRepository;
             _apartmentRepository = apartmentRepository;
+            _mapper = mapper;
         }
 
-        public async Task<BuildingDto?> FindBuildingByAddressAsync(string fullAddress)
-        {
-            if (string.IsNullOrWhiteSpace(fullAddress))
-                return null;
+		public async Task<BuildingDto?> FindBuildingByAddressAsync(string fullAddress)
+		{
+			if (string.IsNullOrWhiteSpace(fullAddress))
+				return null;
 
-            // Приводим к нижнему регистру и убираем лишние пробелы для удобства парсинга
-            var normalized = fullAddress.Trim().ToLowerInvariant();
+			var (streetType, streetName, buildingNumber) = ParseAddress(fullAddress);
 
-            // Словарь: все возможные строковые представления типов улиц → enum
-            var streetTypeMappings = new Dictionary<string, StreetsType>
-            {
-                // Полные названия
-                { "улица", StreetsType.Улица },
-                { "проспект", StreetsType.Проспект },
-                { "переулок", StreetsType.Переулок },
-                { "бульвар", StreetsType.Бульвар },
-                { "площадь", StreetsType.Площадь },
-                { "проезд", StreetsType.Проезд },
-                { "шоссе", StreetsType.Шоссе },
+			if (streetType == null || string.IsNullOrWhiteSpace(streetName) || string.IsNullOrWhiteSpace(buildingNumber))
+				return null;
 
-                // Сокращения и альтернативы
-                { "ул", StreetsType.Улица },
-                { "ул.", StreetsType.Улица },
-                { "пр-кт", StreetsType.Проспект },
-                { "просп", StreetsType.Проспект },
-                { "пр", StreetsType.Проспект },
-                { "пер", StreetsType.Переулок },
-                { "пер.", StreetsType.Переулок },
-                { "б-р", StreetsType.Бульвар },
-                { "бул", StreetsType.Бульвар },
-                { "бульв", StreetsType.Бульвар },
-                { "пл", StreetsType.Площадь },
-                { "пл.", StreetsType.Площадь },
-                { "пр-д", StreetsType.Проезд },
-                { "проез", StreetsType.Проезд },
-                { "ш", StreetsType.Шоссе },
-                { "шос", StreetsType.Шоссе }
-            };
+			var building = await _buildingRepository.GetByFullAddressAsync(streetType.Value, streetName, buildingNumber);
 
-            StreetsType? detectedType = null;
-            string cleanedAddress = normalized;
+			if (building == null)
+				return null;
 
-            // Ищем самое длинное совпадение в начале строки (чтобы "проспект" не путался с "пр")
-            string? matchedKey = null;
-            foreach (var key in streetTypeMappings.Keys.OrderByDescending(k => k.Length))
-            {
-                if (normalized.StartsWith(key + " "))
-                {
-                    matchedKey = key;
-                    detectedType = streetTypeMappings[key];
-                    // Убираем тип улицы из строки
-                    cleanedAddress = normalized.Substring(key.Length).TrimStart();
-                    break;
-                }
-            }
+			return _mapper.Map<BuildingDto>(building);
+		}
 
-            // Если тип не найден в начале — пробуем искать в любом месте (например, "Ленина ул. 25")
-            if (detectedType == null)
-            {
-                foreach (var key in streetTypeMappings.Keys.OrderByDescending(k => k.Length))
-                {
-                    int index = normalized.IndexOf(" " + key + " ");
-                    if (index == -1 && normalized.EndsWith(" " + key)) // на конце
-                        index = normalized.Length - key.Length - 1;
+		public async Task<List<BuildingDto>> GetAdminBuildingsAsync(Guid adminUserId)
+		{
+			var buildings = await _buildingRepository.GetBuildingsByUserIdAsync(adminUserId);
+			return _mapper.Map<List<BuildingDto>>(buildings);
+		}
 
-                    if (index != -1)
-                    {
-                        matchedKey = key;
-                        detectedType = streetTypeMappings[key];
-                        // Убираем найденный тип улицы
-                        cleanedAddress = normalized.Replace(key, "").Trim();
-                        // Убираем лишние пробелы, которые могли остаться
-                        cleanedAddress = System.Text.RegularExpressions.Regex.Replace(cleanedAddress, @"\s+", " ");
-                        break;
-                    }
-                }
-            }
+		public async Task<BuildingDto> GetByIdAsync(Guid buildingId)
+		{
+			var buildings = await _buildingRepository.GetByIdAsync(buildingId);
+			return _mapper.Map<BuildingDto>(buildings);
+		}
 
-            // Если тип улицы так и не найден — возвращаем null (или можно бросить исключение)
-            if (detectedType == null)
-                return null;
+		public async Task<List<ApartmentDto>> GetApartmentsInBuildingAsync(Guid buildingId)
+		{
+			var apartments = await _apartmentRepository.GetApartmentsByBuildingIdAsync(buildingId);
+			return _mapper.Map<List<ApartmentDto>>(apartments);
+		}
 
-            // Теперь в cleanedAddress осталось что-то вроде: "ленина 25" или "ленина, 25" или "25 ленина"
-            // Извлекаем номер дома — это обычно последнее слово, содержащее цифры, буквы (25а, 10к2 и т.д.)
-            var numberMatch = System.Text.RegularExpressions.Regex.Match(cleanedAddress, @"\b(\d+[а-яА-Яa-zA-Z]?(?:/\d+[а-яА-Яa-zA-Z]?)?)\b");
-            if (!numberMatch.Success)
-                return null;
+		private (StreetsType? streetType, string streetName, string buildingNumber) ParseAddress(string fullAddress)
+		{
+			var normalized = fullAddress.Trim().ToLowerInvariant();
 
-            string buildingNumber = numberMatch.Groups[1].Value.Trim();
+			// Словарь для распознавания типа улицы
+			var streetTypes = new Dictionary<string, StreetsType>
+			{
+				{ "улица", StreetsType.Улица },
+				{ "проспект", StreetsType.Проспект },
+				{ "переулок", StreetsType.Переулок },
+				{ "бульвар", StreetsType.Бульвар },
+				{ "площадь", StreetsType.Площадь },
+				{ "проезд", StreetsType.Проезд },
+				{ "шоссе", StreetsType.Шоссе }
+			};
 
-            // Убираем номер дома из строки, чтобы получить чистое название улицы
-            string streetNamePart = System.Text.RegularExpressions.Regex.Replace(cleanedAddress, @"\b\d+[а-яА-Яa-zA-Z]?(?:/\d+[а-яА-Яa-zA-Z]?)?\b", "")
-                .Replace(",", "")
-                .Trim();
+			StreetsType? foundType = null;
+			string foundTypeStr = string.Empty;
 
-            // Очищаем от лишних слов и пробелов
-            streetNamePart = System.Text.RegularExpressions.Regex.Replace(streetNamePart, @"\s+", " ").Trim();
+			//тип улицы
+			foreach (var type in streetTypes.Keys)
+			{
+				if (normalized.Contains(type))
+				{
+					foundType = streetTypes[type];
+					foundTypeStr = type;
+					break;
+				}
+			}
 
-            if (string.IsNullOrEmpty(streetNamePart))
-                return null;
+			if (foundType == null)
+				return (null, "", "");
 
-            // Первая буква заглавная для красоты, но в БД будем искать в нижнем регистре
-            string streetName = char.ToUpper(streetNamePart[0]) + streetNamePart.Substring(1);
+			var withoutType = normalized.Replace(foundTypeStr, "").Trim();
 
-            // Поиск в репозитории
-            var building = await _buildingRepository.GetByFullAddressAsync(detectedType.Value, streetName, buildingNumber);
+			var parts = withoutType.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            if (building == null)
-                return null;
+			//номер дома
+			if (parts.Length < 2)
+				return (null, "", "");
 
-            return new BuildingDto
-            {
-                Id = building.Id,
-                FullAddress = $"{building.StreetType.GetDisplayName()} {building.StreetName}, {building.BuildingNumber}"
-            };
-        }
+			var buildingNum = parts[^1];
+			var streetName = string.Join(" ", parts[0..^1]);
 
-        public async Task<List<BuildingDto>> GetAdminBuildingsAsync(Guid adminUserId)
-        {
-            var buildings = await _buildingRepository.GetBuildingsByUserIdAsync(adminUserId);
-            return buildings.Select(b => new BuildingDto
-            {
-                Id = b.Id,
-                FullAddress = $"{b.StreetType} {b.StreetName}, {b.BuildingNumber}"
-            }).ToList();
-        }
+			if (string.IsNullOrWhiteSpace(streetName) || string.IsNullOrWhiteSpace(buildingNum))
+				return (null, "", "");
 
-        public async Task<List<ApartmentDto>> GetApartmentsInBuildingAsync(Guid buildingId)
-        {
-            var apartments = await _apartmentRepository.GetApartmentsByBuildingIdAsync(buildingId);
-            return apartments.Select(a => new ApartmentDto
-            {
-                Id = a.Id,
-                Number = a.ApartmentNumber,
-                OwnerName = a.User != null ? $"{a.User.FirstName} {a.User.LastName}" : "Свободна"
-            }).ToList();
-        }
-    }
+			streetName = char.ToUpperInvariant(streetName[0]) + streetName.Substring(1);
+
+			return (foundType, streetName, buildingNum);
+		}
+
+	}
 
 }

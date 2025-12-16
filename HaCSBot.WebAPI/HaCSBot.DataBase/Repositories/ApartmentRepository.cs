@@ -74,6 +74,7 @@ namespace HaCSBot.DataBase.Repositories
         {
             return await _context.Apartments
 				.AsNoTracking()
+				.Include(a => a.Building)  
 				.Include(a => a.User)
 				.Where(a => a.UserId == userId)
 				.ToListAsync();

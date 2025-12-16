@@ -1,6 +1,8 @@
-﻿using HaCSBot.DataBase.Repositories.Extensions;
+﻿using AutoMapper;
+using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Models;
+using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {
@@ -8,25 +10,27 @@ namespace HaCSBot.Services.Services
     {
         private readonly ITariffRepository _tariffRepository;
         private readonly IMeterReadingRepository _meterReadingRepository;
+        private readonly IMapper _mapper;
 
-        public TariffService(ITariffRepository tariffRepository, IMeterReadingRepository meterReadingRepository)
+		public TariffService(ITariffRepository tariffRepository,
+            IMeterReadingRepository meterReadingRepository,
+            IMapper mapper)
         {
             _tariffRepository = tariffRepository;
             _meterReadingRepository = meterReadingRepository;
-        }
+            _mapper = mapper;
 
-        public async Task<List<TariffDto>> GetCurrentTariffsAsync(Guid buildingId)
-        {
-            var tariffs = await _tariffRepository.GetAllAsync();
-            // Фильтр по buildingId, если добавлено в модель
-            return tariffs.Select(t => new TariffDto
-            {
-                Type = t.Type,
-                Price = t.Price 
-            }).ToList();
-        }
+		}
 
-        public async Task<decimal> CalculateCostAsync(Guid apartmentId, TariffDto reading, MeterReadingDto readingDto)
+		public async Task<List<TariffDto>> GetCurrentTariffsAsync(Guid buildingId)
+		{
+			var tariffs = await _tariffRepository.GetByBuildingIdAsync(buildingId);
+
+            return _mapper.Map<List<TariffDto>>(tariffs);
+
+		}
+
+		public async Task<decimal> CalculateCostAsync(Guid apartmentId, TariffDto reading, MeterReadingDto readingDto)
         {
             var tariff = await _tariffRepository.GetByTypeAsync(reading.Type);
             if (tariff == null) throw new InvalidOperationException("Tariff not found");

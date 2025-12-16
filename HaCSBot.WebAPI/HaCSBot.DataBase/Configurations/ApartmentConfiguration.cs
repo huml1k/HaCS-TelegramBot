@@ -6,22 +6,23 @@ namespace HaCSBot.DataBase.Configurations
 {
     public class ApartmentConfiguration : IEntityTypeConfiguration<Apartment>
     {
-        public void Configure(EntityTypeBuilder<Apartment> builder)
-        {
-            builder.ToTable("Apartments");
-            builder.HasKey(a => a.Id);
-            builder.Property(a => a.ApartmentNumber).IsRequired().HasMaxLength(10);
+		public void Configure(EntityTypeBuilder<Apartment> builder)
+		{
+			builder.ToTable("Apartments");
+			builder.HasKey(a => a.Id);
+			builder.Property(a => a.ApartmentNumber).IsRequired().HasMaxLength(10);
 
-            
-            builder.HasOne(a => a.Building)
-                   .WithMany() 
-                   .HasForeignKey(a => a.BuildingId)
-                   .OnDelete(DeleteBehavior.Cascade); 
+			// Правильная связь с Building
+			builder.HasOne(a => a.Building)
+				   .WithMany(b => b.Apartments)  // Если в Building есть свойство ICollection<Apartment> Apartments
+				   .HasForeignKey(a => a.BuildingId)  // Правильно: внешний ключ BuildingId в таблице Apartments
+				   .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne(a => a.User)
-                   .WithMany(u => u.Apartments)
-                   .HasForeignKey(a => a.UserId)
-                   .OnDelete(DeleteBehavior.SetNull);
-        }
-    }
+			// Правильная связь с User
+			builder.HasOne(a => a.User)
+				   .WithMany(u => u.Apartments)
+				   .HasForeignKey(a => a.UserId)
+				   .OnDelete(DeleteBehavior.SetNull);
+		}
+	}
 }

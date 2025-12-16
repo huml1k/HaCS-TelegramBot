@@ -1,16 +1,17 @@
-﻿using HaCSBot.DataBase.Enums;
+﻿using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services.Extensions
 {
 	public interface IComplaintService
 	{
-        public Task<Guid> CreateComplaintAsync(CreateComplaintDto dto, long telegramId);
-        public Task<List<ComplaintDto>> GetMyComplaintsAsync(long telegramId);
-        public Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId);
-        public Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId);
-        public Task<ComplaintStatus> ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId);
-        public Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId);
-    }
+		Task<ComplaintDto> CreateComplaintAsync(CreateComplaintDto dto, long telegramId);
+		Task<List<ComplaintDto>> GetMyComplaintsAsync(long telegramId);
+		Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId, long telegramId);
+		Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId);
+		Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId);
+		Task<ComplaintDto> ChangeComplaintStatusAsync(ComplaintStatusChangeDto dto, Guid adminId);
+		Task<bool> CanUserAccessComplaintAsync(Guid complaintId, long telegramId);
+	}
 }

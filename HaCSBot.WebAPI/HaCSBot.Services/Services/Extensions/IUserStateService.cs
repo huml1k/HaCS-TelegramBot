@@ -1,7 +1,7 @@
-﻿using HaCSBot.DataBase.Enums;
+﻿using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
 using HaCSBot.Services.Enums;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services.Extensions
 {
@@ -17,43 +17,32 @@ namespace HaCSBot.Services.Services.Extensions
 		void ClearState(long telegramId);
 
 		// Получить временные данные регистрации для пользователя
-		RegistrationData? GetTempRegistrationData(long telegramId);
+		RegistrationTempDto? GetTempRegistrationData(long telegramId);
 
 		// Сохранить временные данные
-		void SetTempRegistrationData(long telegramId, RegistrationData data);
+		void SetTempRegistrationData(long telegramId, RegistrationTempDto data);
 
 		// Очистить временные данные
 		void ClearTempRegistrationData(long telegramId);
 
-        ComplaintTempData? GetTempComplaintData(long telegramId);
-        void SetTempComplaintData(long telegramId, ComplaintTempData data);
-        void ClearTempComplaintData(long telegramId);
+		ComplaintTempDto? GetTempComplaintData(long telegramId);
+		void SetTempComplaintData(long telegramId, ComplaintTempDto data);
+		void ClearTempComplaintData(long telegramId);
 
-        MeterTempData? GetTempMeterData(long telegramId);
-        void SetTempMeterData(long telegramId, MeterTempData data);
-        void ClearTempMeterData(long telegramId);
-    }
-
-	// Временные данные для регистрации (имя, фамилия, телефон)
-	public class RegistrationData
-	{
-		public string? FirstName { get; set; }
-		public string? LastName { get; set; }
-		public string? Phone { get; set; }
+		MeterReadingTempDto? GetTempMeterData(long telegramId);
+		void SetTempMeterData(long telegramId, MeterReadingTempDto data);
+		void ClearTempMeterData(long telegramId);
 	}
 
-    public class ComplaintTempData
-    {
-        public Guid? ApartmentId { get; set; }
-        public ComplaintCategory? Category { get; set; }
-        public string? Description { get; set; }
-        public List<AttachmentInfo> Attachments { get; set; } = new();
-    }
 
-    public class MeterTempData
-    {
-        public List<Apartment> Apartments { get; set; } = new();
-        public Guid? SelectedApartmentId { get; set; }
-        public MeterType? SelectedType { get; set; }
-    }
+
+
+	public class UserStateDto
+	{
+		public ConversationState State { get; set; }
+		public RegistrationTempDto? RegistrationData { get; set; }
+		public ComplaintTempDto? ComplaintData { get; set; }
+		public MeterReadingTempDto? MeterData { get; set; }
+		public DateTime LastActivity { get; set; } = DateTime.UtcNow;
+	}
 }

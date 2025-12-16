@@ -22,8 +22,12 @@ namespace HaCSBot.DataBase.Configurations
             builder.Property(t => t.ValidFrom)
                    .IsRequired();
 
-            // Может быть null — тариф действует "вечно"
             builder.Property(t => t.ValidTo);
-        }
+
+			builder.HasOne(t => t.Building)
+			  .WithMany(b => b.Tariffs)  
+			  .HasForeignKey(t => t.BuildingId)
+			  .OnDelete(DeleteBehavior.Cascade);
+		}
     }
 }

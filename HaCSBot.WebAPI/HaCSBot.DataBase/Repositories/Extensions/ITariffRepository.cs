@@ -11,5 +11,7 @@ namespace HaCSBot.DataBase.Repositories.Extensions
         public Task AddAsync(Tariff entity);
         public Task UpdateAsync(Tariff entity);
         public Task DeleteAsync(Guid id);
-    }
+        public Task<List<Tariff>> GetByBuildingIdAsync(Guid buildingId);
+
+	}
 }

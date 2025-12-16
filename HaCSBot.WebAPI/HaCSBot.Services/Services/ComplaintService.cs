@@ -1,96 +1,129 @@
-﻿using HaCSBot.DataBase.Enums;
+﻿using AutoMapper;
+using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Enums;
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {
 	public class ComplaintService : IComplaintService
 	{
-        private readonly IComplaintRepository _complaintRepository;
-        private readonly IApartmentRepository _apartmentRepository;
-        private readonly IUserRepository _userRepository;
+		private readonly IComplaintRepository _complaintRepository;
+		private readonly IApartmentRepository _apartmentRepository;
+		private readonly IUserRepository _userRepository;
+		private readonly IMapper _mapper;
 
-        public ComplaintService(IComplaintRepository complaintRepository,
-            IApartmentRepository apartmentRepository,
-            IUserRepository userRepository)
-        {
-            _complaintRepository = complaintRepository;
-            _apartmentRepository = apartmentRepository;
-            _userRepository = userRepository;
-        }
+		public ComplaintService(
+			IComplaintRepository complaintRepository,
+			IApartmentRepository apartmentRepository,
+			IUserRepository userRepository,
+			IMapper mapper)
+		{
+			_complaintRepository = complaintRepository;
+			_apartmentRepository = apartmentRepository;
+			_userRepository = userRepository;
+			_mapper = mapper;
+		}
 
-        public async Task<Guid> CreateComplaintAsync(CreateComplaintDto dto, long telegramId)
-        {
-            var user = await _userRepository.GetByTelegramIdAsync(telegramId);
-            if (user == null) throw new InvalidOperationException("User not found");
+		public async Task<ComplaintDto> CreateComplaintAsync(CreateComplaintDto dto, long telegramId)
+		{
+			// Получаем пользователя
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user == null)
+				throw new InvalidOperationException("Пользователь не найден");
 
-            var apartment = await _apartmentRepository.GetByIdAsync(dto.ApartmentId);
-            if (apartment == null || apartment.UserId != user.Id) throw new InvalidOperationException("Apartment not found or not owned");
+			// Проверяем квартиру
+			var apartment = await _apartmentRepository.GetByIdAsync(dto.ApartmentId);
+			if (apartment == null || apartment.UserId != user.Id)
+				throw new InvalidOperationException("Квартира не найдена или не принадлежит вам");
 
-            var complaint = new Complaint
-            {
-                ApartmentId = dto.ApartmentId,
-                Category = dto.Category,
-                Description = dto.Description,
-                Status = ComplaintStatus.New,
-                CreatedDate = DateTime.UtcNow,
-                Attachments = dto.Attachments.Select(a => new ComplaintAttachment { Type = a.Type, TelegramFileId = a.TelegramFileId, Caption = a.Caption }).ToList()
-            };
-            await _complaintRepository.AddAsync(complaint);
-            return complaint.Id;
-        }
+			// Маппим DTO в модель
+			var complaint = _mapper.Map<Complaint>(dto);
+			complaint.CreatedDate = DateTime.UtcNow;
+			complaint.Status = ComplaintStatus.New;
 
-        public async Task<List<ComplaintDto>> GetMyComplaintsAsync(long telegramId)
-        {
-            var complaints = await _complaintRepository.GetByUserTelegramIdAsync(telegramId);
-            return complaints.Select(c => new ComplaintDto
-            {
-                Id = c.Id,
-                Description = c.Description,
-                Status = c.Status
-            }).ToList();
-        }
+			// Сохраняем
+			await _complaintRepository.AddAsync(complaint);
 
-        public async Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId)
-        {
-            var complaints = await _complaintRepository.GetUnprocessedAsync();
+			// Возвращаем DTO
+			return _mapper.Map<ComplaintDto>(complaint);
+		}
 
-            return complaints.Select(c => new ComplaintDto
-            {
-                Id = c.Id,
-                Description = c.Description
-            }).ToList();
-        }
+		public async Task<List<ComplaintDto>> GetMyComplaintsAsync(long telegramId)
+		{
+			var complaints = await _complaintRepository.GetByUserTelegramIdAsync(telegramId);
+			return _mapper.Map<List<ComplaintDto>>(complaints);
+		}
 
-        public async Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId)
-        {
-            var complaints = await _complaintRepository.GetByBuildingIdAsync(buildingId, 1, 100);
-            return complaints.Select(c => new ComplaintDto
-            {
-                Id = c.Id,
-                Description = c.Description
-            }).ToList();
-        }
+		public async Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId, long telegramId)
+		{
+			var complaint = await _complaintRepository.GetByIdAsync(complaintId);
+			if (complaint == null)
+				throw new InvalidOperationException("Жалоба не найдена");
 
-        public async Task<ComplaintStatus> ChangeComplaintStatusAsync(Guid complaintId, ComplaintStatus status, Guid adminId)
-        {
-            await _complaintRepository.ChangeStatusAsync(complaintId, status);
-            return status;
-        }
+			// Проверяем права доступа
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user == null)
+				throw new InvalidOperationException("Пользователь не найден");
 
-        public async Task<ComplaintDetailsDto> GetComplaintDetailsAsync(Guid complaintId)
-        {
-            var complaint = await _complaintRepository.GetByIdWithDetailsAsync(complaintId);
-            if (complaint == null) throw new InvalidOperationException("Complaint not found");
+			if (complaint.Apartment.UserId != user.Id && user.Role != Roles.Admin)
+				throw new UnauthorizedAccessException("Нет доступа к этой жалобе");
 
-            return new ComplaintDetailsDto
-            {
-                Id = complaint.Id,
-                Description = complaint.Description,
-                Attachments = complaint.Attachments.Select(a => a.TelegramFileId).ToList()
-            };
-        }
-    }
+			return _mapper.Map<ComplaintDetailsDto>(complaint);
+		}
+
+		public async Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId)
+		{
+			var user = await _userRepository.GetByIdAsync(adminId);
+			if (user?.Role != Roles.Admin)
+				throw new UnauthorizedAccessException("Требуются права администратора");
+
+			var complaints = await _complaintRepository.GetUnprocessedAsync();
+			return _mapper.Map<List<ComplaintDto>>(complaints);
+		}
+
+		public async Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId)
+		{
+			var complaints = await _complaintRepository.GetByBuildingIdAsync(buildingId, 1, 100);
+			return _mapper.Map<List<ComplaintDto>>(complaints);
+		}
+
+		public async Task<ComplaintDto> ChangeComplaintStatusAsync(ComplaintStatusChangeDto dto, Guid adminId)
+		{
+			// Проверяем права администратора
+			var admin = await _userRepository.GetByIdAsync(adminId);
+			if (admin?.Role != Roles.Admin)
+				throw new UnauthorizedAccessException("Требуются права администратора");
+
+			// Получаем жалобу
+			var complaint = await _complaintRepository.GetByIdAsync(dto.ComplaintId);
+			if (complaint == null)
+				throw new InvalidOperationException("Жалоба не найдена");
+
+			// Обновляем статус
+			complaint.Status = dto.Status;
+
+			if (dto.Status == ComplaintStatus.Resolved || dto.Status == ComplaintStatus.Closed)
+				complaint.ResolvedDate = DateTime.UtcNow;
+
+			await _complaintRepository.UpdateAsync(complaint);
+
+			return _mapper.Map<ComplaintDto>(complaint);
+		}
+
+		public async Task<bool> CanUserAccessComplaintAsync(Guid complaintId, long telegramId)
+		{
+			var complaint = await _complaintRepository.GetByIdAsync(complaintId);
+			if (complaint == null) return false;
+
+			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
+			if (user == null) return false;
+
+			// Пользователь имеет доступ если:
+			// 1. Он владелец квартиры
+			// 2. Он администратор
+			return complaint.Apartment.UserId == user.Id || user.Role == Roles.Admin;
+		}
+	}
 }

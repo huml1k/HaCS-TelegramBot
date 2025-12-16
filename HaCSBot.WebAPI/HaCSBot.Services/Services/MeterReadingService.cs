@@ -1,7 +1,7 @@
-﻿using HaCSBot.DataBase.Models;
+﻿using HaCSBot.Contracts.DTOs;
+using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
-using static HaCSBot.Contracts.DTOs.DTOs;
 
 namespace HaCSBot.Services.Services
 {
@@ -21,7 +21,7 @@ namespace HaCSBot.Services.Services
             _userRepository = userRepository;
         }
 
-        public async Task SubmitMeterReadingAsync(SubmitReadingDto dto, long telegramId)
+        public async Task SubmitMeterReadingAsync(SubmitMeterReadingDto dto, long telegramId)
         {
             var user = await _userRepository.GetByTelegramIdAsync(telegramId);
             if (user == null) throw new InvalidOperationException("User not found");
@@ -48,13 +48,13 @@ namespace HaCSBot.Services.Services
                 .Select(r => new MeterReadingDto { Type = r.Type, Value = r.Value, Date = r.ReadingDate }).ToList();
         }
 
-        public async Task<List<MeterReadingHistoryDto>> GetHistoryAsync(Guid apartmentId, int months = 12)
+        public async Task<List<MeterReadingDto>> GetHistoryAsync(Guid apartmentId, int months = 12)
         {
             var fromDate = DateTime.UtcNow.AddMonths(-months);
             var readings = await _meterReadingRepository.GetByApartmentIdAsync(apartmentId);
             readings = readings.Where(r => r.ReadingDate >= fromDate).ToList();
-            return readings.Select(r => new MeterReadingHistoryDto
-            {
+            return readings.Select(r => new MeterReadingDto
+			{
                 Type = r.Type,
                 Value = r.Value,
                 Date = r.ReadingDate

@@ -44,7 +44,16 @@ namespace HaCSBot.DataBase.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<Tariff?> GetByTypeAsync(TariffType tariffType)
+		public async Task<List<Tariff>> GetByBuildingIdAsync(Guid buildingId)
+		{
+			return await _context.Tariffs
+				.AsNoTracking()
+				.Include(t => t.Building)
+				.Where(t => t.BuildingId == buildingId)  
+				.ToListAsync();
+		}
+
+		public async Task<Tariff?> GetByTypeAsync(TariffType tariffType)
         {
             return await _context.Tariffs
                 .AsNoTracking()

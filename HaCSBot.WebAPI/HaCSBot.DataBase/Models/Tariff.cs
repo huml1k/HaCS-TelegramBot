@@ -10,6 +10,7 @@ namespace HaCSBot.DataBase.Models
 		public decimal Price { get; set; }
 		public DateTime ValidFrom { get; set; }
 		public DateTime? ValidTo { get; set; }
-		public Guid? BuildingId { get; set; }  // если разные по домам
+		public Guid BuildingId { get; set; }  
+		public Building Building { get; set; } 
 	}
 }

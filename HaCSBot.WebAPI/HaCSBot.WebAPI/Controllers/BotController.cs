@@ -7,7 +7,7 @@ using Telegram.Bot.Types;
 namespace HaCSBot.WebAPI.Controllers
 {
     [ApiController]
-    [Route("/")]
+    [Route("")]
     public class BotController(IOptions<BotConfiguration> Config) : ControllerBase
     {
         [HttpGet("setWebhook")]

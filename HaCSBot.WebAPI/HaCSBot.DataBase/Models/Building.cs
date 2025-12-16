@@ -9,5 +9,7 @@ namespace HaCSBot.DataBase.Models
         public string StreetName { get; set; }
         public string BuildingNumber { get; set; }
         public List<Apartment> Apartments { get; set; }
-    }
+		public List<Tariff> Tariffs { get; set; }
+
+	}
 }
