@@ -108,7 +108,7 @@ namespace HaCSBot.WebAPI.Handlers
 			switch (text)
 			{
 				case "Сообщить о проблеме":
-					await HandleReportProblem(msg);
+					await _complaintHandler.HandleReportProblem(msg);
 					break;
 
 				case "Передача показаний счётчиков":
@@ -143,52 +143,6 @@ namespace HaCSBot.WebAPI.Handlers
 					await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
 					break;
 			}
-		}
-
-		public async Task HandleReportProblem(Message message)
-		{
-			long chatId = message.Chat.Id;
-			long userId = message.From!.Id;
-
-			var user = await _userService.GetUserDtoAsync(userId);
-			var userProfileDto = await _userService.GetProfileAsync(userId);
-
-			if (user == null) return;
-
-			// Получаем все квартиры пользователя
-			var apartments = await _apartmentService.GetByUserIdAsync(user.Id);
-
-			if (!apartments.Any())
-			{
-				await _bot.SendMessage(chatId, "У вас нет зарегистрированных квартир. Обратитесь к администратору.");
-				await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
-				return;
-			}
-
-			// Если одна квартира — сразу переходим к категории
-			if (apartments.Count == 1)
-			{
-				_userState.SetTempComplaintData(userId, new ComplaintTempDto
-				{
-					SelectedApartmentId = apartments.First().Id
-				});
-				await _complaintHandler.AskComplaintCategory(chatId, userId);
-				return;
-			}
-
-			// Если несколько — просим выбрать
-			var keyboardButtons = apartments.Select(a =>
-				new KeyboardButton($"{a.Number} — {a.BuildingAddress}")
-			).ToArray();
-
-			var keyboard = new ReplyKeyboardMarkup(keyboardButtons)
-			{
-				ResizeKeyboard = true,
-				OneTimeKeyboard = true
-			};
-
-			await _bot.SendMessage(chatId, "Выберите квартиру, по которой хотите сообщить о проблеме:", replyMarkup: keyboard);
-			_userState.SetState(userId, ConversationState.AwaitingComplaintApartment);
 		}
 	}
 

@@ -3,6 +3,7 @@ using HaCSBot.Contracts.DTOs;
 using HaCSBot.DataBase.Models;
 using HaCSBot.DataBase.Repositories.Extensions;
 using HaCSBot.Services.Services.Extensions;
+using Telegram.Bot.Types;
 
 namespace HaCSBot.Services.Services
 {
@@ -19,7 +20,19 @@ namespace HaCSBot.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<List<ApartmentDto>> GetByUserIdAsync(Guid userId)
+		public async Task<ApartmentDto> GetByIdAsync(Guid id)
+		{
+			//Получаем данные из репозитория
+			var apartment = await _apartmentRepository.GetByIdAsync(id);
+
+			// Маппим в DTO
+			var apartmentDto = _mapper.Map<ApartmentDto>(apartment);
+
+			//Возвращаем DTO
+			return apartmentDto;
+		}
+
+		public async Task<List<ApartmentDto>> GetByUserIdAsync(Guid userId)
         {
 			//Получаем данные из репозитория
 			var apartments = await _apartmentRepository.GetByUserIdAsync(userId);

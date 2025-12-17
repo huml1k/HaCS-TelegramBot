@@ -1,13 +1,16 @@
 ﻿using HaCSBot.Contracts.DTOs;
 using HaCSBot.DataBase.Enums;
+using HaCSBot.DataBase.Models;
 using HaCSBot.Services.Enums;
 using HaCSBot.Services.Services;
 using HaCSBot.Services.Services.Extensions;
+using Microsoft.OpenApi.Extensions;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace HaCSBot.WebAPI.Handlers
 {
@@ -20,6 +23,7 @@ namespace HaCSBot.WebAPI.Handlers
 		private readonly IApartmentService _apartmentService;
 		private readonly ITelegramBotClient _bot;
 		private readonly IUserStateService _userState;
+		private readonly IUserService _userService;
 		private readonly IComplaintService _complaintService;
 		private readonly MainMenuHandler _mainMenuHandler;
 		private readonly ILogger<UpdateHandler> _logger;
@@ -30,7 +34,8 @@ namespace HaCSBot.WebAPI.Handlers
 			IUserStateService userState,
 			IComplaintService complaintService,
 			MainMenuHandler mainMenuHandler,
-			ILogger<UpdateHandler> logger
+			ILogger<UpdateHandler> logger,
+			IUserService userService
 			)
 		{
 			_apartmentService = apartmentService;
@@ -39,6 +44,53 @@ namespace HaCSBot.WebAPI.Handlers
 			_complaintService = complaintService;
 			_mainMenuHandler = mainMenuHandler;
 			_logger = logger;
+			_userService = userService;
+		}
+
+		public async Task HandleReportProblem(Message message)
+		{
+			long chatId = message.Chat.Id;
+			long userId = message.From!.Id;
+
+			var user = await _userService.GetUserDtoAsync(userId);
+			var userProfileDto = await _userService.GetProfileAsync(userId);
+
+			if (user == null) return;
+
+			// Получаем все квартиры пользователя
+			var apartments = await _apartmentService.GetByUserIdAsync(user.Id);
+
+			if (!apartments.Any())
+			{
+				await _bot.SendMessage(chatId, "У вас нет зарегистрированных квартир. Обратитесь к администратору.");
+				await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
+				return;
+			}
+
+			// Если одна квартира — сразу переходим к категории
+			if (apartments.Count == 1)
+			{
+				_userState.SetTempComplaintData(userId, new ComplaintTempDto
+				{
+					SelectedApartmentId = apartments.First().Id
+				});
+				await AskComplaintCategory(chatId, userId);
+				return;
+			}
+
+			// Если несколько — просим выбрать
+			var keyboardButtons = apartments.Select(a =>
+				new KeyboardButton($"{a.Number} — {a.BuildingAddress}")
+			).ToArray();
+
+			var keyboard = new ReplyKeyboardMarkup(keyboardButtons)
+			{
+				ResizeKeyboard = true,
+				OneTimeKeyboard = true
+			};
+
+			await _bot.SendMessage(chatId, "Выберите квартиру, по которой хотите сообщить о проблеме:", replyMarkup: keyboard);
+			_userState.SetState(userId, ConversationState.AwaitingComplaintApartment);
 		}
 
 
@@ -60,6 +112,7 @@ namespace HaCSBot.WebAPI.Handlers
 
 			var tempData = _userState.GetTempComplaintData(userId) ?? new ComplaintTempDto();
 			tempData.SelectedApartmentId = selectedApartment.Id;
+			tempData.Apartments = apartments;
 			_userState.SetTempComplaintData(userId, tempData);
 
 			await AskComplaintCategory(chatId, userId);
@@ -139,6 +192,8 @@ namespace HaCSBot.WebAPI.Handlers
 			long chatId = msg.Chat.Id;
 			long userId = msg.From!.Id;
 			string? description = msg.Text?.Trim();
+
+
 			if (string.IsNullOrWhiteSpace(description))
 			{
 				await _bot.SendMessage(chatId, "Описание не может быть пустым. Напишите ещё раз:");
@@ -156,23 +211,47 @@ namespace HaCSBot.WebAPI.Handlers
 			tempData.Description = description;
 			_userState.SetTempComplaintData(userId, tempData);
 
+			var selectedApartment = await _apartmentService.GetByIdAsync(tempData.SelectedApartmentId.Value);
+
+			string apartmentText = selectedApartment != null
+				? $"{selectedApartment.Number} — {selectedApartment.BuildingAddress}"
+				: "Неизвестная квартира";
 
 			var keyboard = new ReplyKeyboardMarkup(new[]
 			{
-				new KeyboardButton("Отправить без фото"),
-				new KeyboardButton("Прикрепить фото/документы")
+				new KeyboardButton("Отправить")
 			})
 			{
 				ResizeKeyboard = true,
 				OneTimeKeyboard = true
 			};
 
+
 			await _bot.SendMessage(chatId,
-				$"Проверьте:\n\nКвартира: {tempData.SelectedApartmentId}\nКатегория: {tempData.SelectedCategory}\nОписание: {description}\n\n" +
-				"Хотите прикрепить фото или отправить так?",
+				$"Проверьте вашу жалобу:\n\n" +
+				$"🏠 Квартира: {apartmentText}\n" +
+				$"📂 Категория: {tempData.SelectedCategory.GetName()}\n" + 
+				$"✍️ Описание: {description}",
 				replyMarkup: keyboard);
 
 			_userState.SetState(userId, ConversationState.AwaitingComplaintPhoto);
+		}
+
+		//метод костыль обходит отправку фото
+		public async Task HandleComplaintSendAnswer(Message msg, UserProfileDto userDto)
+		{
+			long chatId = msg.Chat.Id;
+			long userId = msg.From!.Id;
+			string? text = msg.Text;
+
+			var tempData = _userState.GetTempComplaintData(userId);
+			if (tempData == null) return;
+
+			if (text == "Отправить")
+			{
+				await SaveComplaint(tempData, userId, chatId, userDto);
+				return;
+			}
 		}
 
 		public async Task HandleComplaintAttachments(Message msg, UserProfileDto userDto)
@@ -243,13 +322,14 @@ namespace HaCSBot.WebAPI.Handlers
 				}).ToList()
 			};
 
+
 			try
 			{
-				var complaintId = await _complaintService.CreateComplaintAsync(dto, userId);
+				var complaint = await _complaintService.CreateComplaintAsync(dto, userId);
 
 				await _bot.SendMessage(chatId,
 					"✅ Жалоба успешно отправлена!\n\n" +
-					"Мы приняли её в работу. Номер заявки: <b>#" + complaintId + "</b>\n" +
+					"Мы приняли её в работу. Номер заявки: <b>#" + complaint.Id.ToString("N").Substring(0, 8) + " </b>\n" +
 					"О результатах сообщим дополнительно.",
 					parseMode: ParseMode.Html,
 					replyMarkup: new ReplyKeyboardRemove());
@@ -295,6 +375,7 @@ namespace HaCSBot.WebAPI.Handlers
 				};
 
 				text.AppendLine($"{statusEmoji}<b>#{c.Id.ToString("N").Substring(0, 8)}</b>");
+				text.AppendLine($"{c.Category.GetName()}");
 				text.AppendLine($"{c.Description}");
 				text.AppendLine($"Статус: <i>{GetStatusName(c.Status)}</i>\n");
 			}

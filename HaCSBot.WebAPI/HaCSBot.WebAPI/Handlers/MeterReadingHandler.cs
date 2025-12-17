@@ -125,8 +125,7 @@ namespace HaCSBot.WebAPI.Handlers
 				{ "Электро (день)", MeterType.ElectricityDay },
 				{ "Электро (ночь)", MeterType.ElectricityNight },
 				{ "Электро (однотариф)", MeterType.ElectricitySingle },
-				{ "Газ", MeterType.Gas },
-				{ "Отопление", MeterType.Heating }
+				{ "Газ", MeterType.Gas }
 			};
 
 			var selectedType = typeMap.FirstOrDefault(k => text?.Contains(k.Key) == true).Value;

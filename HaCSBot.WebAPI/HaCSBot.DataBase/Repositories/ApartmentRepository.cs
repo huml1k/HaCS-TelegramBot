@@ -21,7 +21,7 @@ namespace HaCSBot.DataBase.Repositories
 
 		public async Task DeleteAsync(Guid id)
 		{
-			var entity = await GetById(id);
+			var entity = await GetByIdAsync(id);
 			if (entity != null)
 			{
 				_context.Apartments.Remove(entity);
@@ -54,15 +54,13 @@ namespace HaCSBot.DataBase.Repositories
             return await _context.Apartments.Where(a => a.BuildingId == buildingId).ToListAsync();
         }
 
-        public async Task<Apartment?> GetById(Guid id)
+        public async Task<Apartment?> GetByIdAsync(Guid id)
         {
-            return await _context.Apartments.FindAsync(id);
+            return await _context.Apartments
+				.AsNoTracking()
+				.Include(a => a.Building)
+				.FirstOrDefaultAsync(a => a.Id == id);
         }
-
-		public async Task<Apartment?> GetByIdAsync(Guid id)
-		{
-			return await _context.Apartments.FindAsync(id);
-		}
 
 		public async Task<Apartment?> GetByNumberAndBuildingIdAsync(string apartmentNumber, Guid buildingId)
 		{
