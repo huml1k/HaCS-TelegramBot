@@ -14,7 +14,8 @@ namespace HaCSBot.Services.Services.Extensions
 		Task<User?> GetByTelegramIdAsync(long telegramId);
 		Task UpdateUserAsync(User user);
 		Task<UserDto> GetUserDtoAsync(long telegramId);
+        Task<UserDto?> GetUserDtoAsyncByUserId(Guid userId);
 
-		Task LogoutAsync(long telegramId);
+        Task LogoutAsync(long telegramId);
 	}
 }

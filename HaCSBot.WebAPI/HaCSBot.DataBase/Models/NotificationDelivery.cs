@@ -3,7 +3,7 @@
 	// Доставка и статус прочтения 
 	public class NotificationDelivery
 	{
-		public Guid Id { get; set; }
+		public Guid Id { get; set; } = Guid.NewGuid();
 		public Guid NotificationId { get; set; }
 		public long TelegramUserId { get; set; }     
 		public DateTime? SentDate { get; set; }

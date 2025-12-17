@@ -12,6 +12,8 @@ namespace HaCSBot.Contracts.AutoMapping
 				.ForMember(dest => dest.FullAddress,
 					opt => opt.MapFrom(src =>
 					$"{src.StreetType} {src.StreetName}, {src.BuildingNumber}"));
+
+			CreateMap<Building, BuildingForNotificationDto>();
 		}
 	}
 }

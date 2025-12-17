@@ -4,8 +4,8 @@ namespace HaCSBot.DataBase.Models
 {
 	public class Notification
 	{
-		public Guid Id { get; set; }
-		public NotificationType Type { get; set; }
+		public Guid Id { get; set; } = Guid.NewGuid();
+        public NotificationType Type { get; set; }
 		public string Title { get; set; } = string.Empty;
 		public string Message { get; set; } = string.Empty;
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;

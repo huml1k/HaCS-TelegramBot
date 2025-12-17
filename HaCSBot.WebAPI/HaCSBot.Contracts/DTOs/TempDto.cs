@@ -36,4 +36,17 @@ namespace HaCSBot.Contracts.DTOs
 		public int CurrentStep { get; set; } = 1;
 		public List<ApartmentDto> Apartments { get; set; } = new();
 	}
+
+    public class NotificationTempDto
+    {
+        public Guid CreatorId { get; set; }
+        public NotificationType Type { get; set; } = NotificationType.GeneralAnnouncement;
+        public Guid? BuildingId { get; set; } // null = всем
+        public Guid? ApartmentId { get; set; } // новое: для отправки конкретному жильцу
+		public string? Title { get; set; }
+        public string? Message { get; set; }
+        public DateTime? ScheduledSendDate { get; set; }
+        public List<AttachmentDto> Attachments { get; set; } = new();
+        public int CurrentStep { get; set; } = 1;
+    }
 }

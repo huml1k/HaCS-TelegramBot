@@ -9,10 +9,12 @@ namespace HaCSBot.Contracts.DTOs
 		[Required]
 		public NotificationType Type { get; set; }
 		[Required]
+        public string? Title { get; set; }
+        [Required]
 		public string Message { get; set; } = string.Empty;
 		public Guid? BuildingId { get; set; }
 		public Guid? BuildingMaintenanceId { get; set; }
 		public DateTime? ScheduledSendDate { get; set; }
-		public List<AttachmentDto> Attachments { get; set; } = new List<AttachmentDto>();
+        public List<AttachmentDto> Attachments { get; set; } = new List<AttachmentDto>();
 	}
 }

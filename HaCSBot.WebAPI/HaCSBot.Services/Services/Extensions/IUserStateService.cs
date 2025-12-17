@@ -32,7 +32,11 @@ namespace HaCSBot.Services.Services.Extensions
 		MeterReadingTempDto? GetTempMeterData(long telegramId);
 		void SetTempMeterData(long telegramId, MeterReadingTempDto data);
 		void ClearTempMeterData(long telegramId);
-	}
+
+        NotificationTempDto? GetTempNotificationData(long telegramId);
+        void SetTempNotificationData(long telegramId, NotificationTempDto data);
+        void ClearTempNotificationData(long telegramId);
+    }
 
 
 
@@ -43,6 +47,7 @@ namespace HaCSBot.Services.Services.Extensions
 		public RegistrationTempDto? RegistrationData { get; set; }
 		public ComplaintTempDto? ComplaintData { get; set; }
 		public MeterReadingTempDto? MeterData { get; set; }
-		public DateTime LastActivity { get; set; } = DateTime.UtcNow;
+        public NotificationTempDto? NotificationData { get; set; }
+        public DateTime LastActivity { get; set; } = DateTime.UtcNow;
 	}
 }

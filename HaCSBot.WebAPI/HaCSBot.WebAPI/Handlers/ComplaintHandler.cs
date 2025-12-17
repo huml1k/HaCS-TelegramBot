@@ -327,7 +327,24 @@ namespace HaCSBot.WebAPI.Handlers
 			await _mainMenuHandler.ShowMainMenu(userDto, chatId);
 		}
 
-		public string GetStatusName(ComplaintStatus status) => status switch
+        public async Task ShowAllComplaints(Message msg, UserProfileDto userDto)
+        {
+            long chatId = msg.Chat.Id;
+
+            var complaints = await _complaintService.GetAllComplaintsForAdminAsync(userDto.Id);
+
+            var text = new StringBuilder("Все жалобы:\n\n");
+            foreach (var c in complaints)
+            {
+                text.AppendLine($"<b>#{c.Id.ToString("N").Substring(0, 8)}</b>");
+                text.AppendLine($"{c.Description}\n");
+            }
+
+            await _bot.SendMessage(chatId, text.ToString(), parseMode: ParseMode.Html);
+            await _mainMenuHandler.ShowMainMenu(userDto, chatId);
+        }
+
+        public string GetStatusName(ComplaintStatus status) => status switch
 		{
 			ComplaintStatus.New => "Новая",
 			ComplaintStatus.Accepted => "Принята",
@@ -337,5 +354,216 @@ namespace HaCSBot.WebAPI.Handlers
 			ComplaintStatus.Rejected => "Отклонена",
 			_ => status.ToString()
 		};
-	}
+
+        public async Task ShowAdminComplaintsManagement(Message msg, UserProfileDto admin)
+        {
+            long chatId = msg.Chat.Id;
+            long userId = msg.From!.Id;
+
+            var allComplaints = await _complaintService.GetAllComplaintsForAdminAsync(admin.Id);
+
+            // Фильтруем только активные жалобы
+            var activeComplaints = allComplaints
+                .Where(c => c.Status == ComplaintStatus.New ||
+                            c.Status == ComplaintStatus.Accepted ||
+                            c.Status == ComplaintStatus.InProgress)
+                .ToList();
+
+            if (!activeComplaints.Any())
+            {
+                await _bot.SendMessage(chatId, "Активных жалоб (в работе) нет.");
+                await _mainMenuHandler.ShowMainMenu(admin, chatId);
+                return;
+            }
+
+            var buttons = activeComplaints.Select(c =>
+            {
+                string status = c.Status switch
+                {
+                    ComplaintStatus.New => "🆕",
+                    ComplaintStatus.Accepted => "⏳",
+                    ComplaintStatus.InProgress => "🔧",
+                    _ => "❓"
+                };
+
+                string shortId = c.Id.ToString("N").Substring(0, 8);
+                return new KeyboardButton($"{status} #{shortId}");
+            }).ToList();
+
+            buttons.Add(new KeyboardButton("⬅ Назад в панель"));
+
+            var keyboard = new ReplyKeyboardMarkup(buttons.Chunk(1))
+            {
+                ResizeKeyboard = true
+            };
+
+            await _bot.SendMessage(chatId, "📋 <b>Управление жалобами</b>\n\nАктивные жалобы (требуют внимания):",
+                parseMode: ParseMode.Html, replyMarkup: keyboard);
+
+            _userState.SetState(userId, ConversationState.AdminViewComplaintsList);
+        }
+
+        public async Task HandleAdminComplaintSelection(Message msg, UserProfileDto admin)
+        {
+            long chatId = msg.Chat.Id;
+            long userId = msg.From!.Id;
+            string? text = msg.Text?.Trim();
+
+            if (text == "⬅ Назад в панель")
+            {
+                _userState.SetState(userId, ConversationState.None);
+                await _mainMenuHandler.ShowMainMenu(admin, chatId);
+                return;
+            }
+
+            // Извлекаем короткий ID из текста кнопки (например, "🆕 #a1b2c3d4")
+            var parts = text.Split('#');
+            if (parts.Length < 2)
+            {
+                await _bot.SendMessage(chatId, "Не удалось определить жалобу.");
+                return;
+            }
+
+            string shortId = parts[1].Trim().Substring(0, 8);
+
+            var complaints = await _complaintService.GetAllComplaintsForAdminAsync(admin.Id);
+            var selectedComplaint = complaints.FirstOrDefault(c =>
+                c.Id.ToString("N").StartsWith(shortId));
+
+            if (selectedComplaint == null)
+            {
+                await _bot.SendMessage(chatId, "Жалоба не найдена.");
+                _userState.SetState(userId, ConversationState.None);  
+                await _mainMenuHandler.ShowMainMenu(admin, chatId);
+                return;
+            }
+
+            // Теперь показываем детали и кнопки смены статуса
+            await ShowComplaintDetailsAndStatusButtons(chatId, selectedComplaint, admin, userId);
+        }
+
+        private async Task ShowComplaintDetailsAndStatusButtons(long chatId, ComplaintDto complaint, UserProfileDto admin, long userId)
+        {
+            var details = await _complaintService.GetComplaintDetailsAsync(complaint.Id, userId);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"<b>Жалоба #{complaint.Id.ToString("N").Substring(0, 8)}</b>\n");
+            sb.AppendLine($"🏠 Квартира: {details.ApartmentNumber}, {details.BuildingAddress}");
+            sb.AppendLine($"📂 Категория: {details.Category}");
+            sb.AppendLine($"📅 Дата: {details.CreatedDate:dd.MM.yyyy HH:mm}");
+            sb.AppendLine($"📋 Статус: <b>{GetStatusName(details.Status)}</b>\n");
+            sb.AppendLine($"<i>{details.Description}</i>");
+
+            if (details.Attachments.Any())
+            {
+                sb.AppendLine("\n📎 Вложения:");
+                foreach (var att in details.Attachments)
+                {
+                    await SendAttachment(chatId, att);
+                }
+            }
+
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+				new[] { new KeyboardButton("Принята"), new KeyboardButton("В работе") },
+				new[] { new KeyboardButton("Решена"), new KeyboardButton("Закрыта") },
+				new[] { new KeyboardButton("Отклонена") },
+				new[] { new KeyboardButton("⬅ Назад к списку") }
+			})
+            {
+                ResizeKeyboard = true
+            };
+
+            await _bot.SendMessage(chatId, sb.ToString(), parseMode: ParseMode.Html, replyMarkup: keyboard);
+
+            // Сохраняем ID выбранной жалобы
+            var tempData = new ComplaintTempDto { SelectedApartmentId = complaint.Id };
+            _userState.SetTempComplaintData(userId, tempData);
+
+            _userState.SetState(userId, ConversationState.AdminChangeComplaintStatus);
+        }
+
+        public async Task HandleAdminComplaintStatusChange(Message msg, UserProfileDto admin)
+        {
+            long chatId = msg.Chat.Id;
+            long userId = msg.From!.Id;
+            string? text = msg.Text;
+
+            if (text == "⬅ Назад к списку")
+            {
+                _userState.SetState(userId, ConversationState.None);
+                await ShowAdminComplaintsManagement(msg, admin);
+                return;
+            }
+
+            var tempData = _userState.GetTempComplaintData(userId);
+            if (tempData?.SelectedApartmentId == null)
+            {
+                await _bot.SendMessage(chatId, "Ошибка: жалоба не выбрана.");
+                return;
+            }
+
+            ComplaintStatus newStatus = text switch
+            {
+                "Принята" => ComplaintStatus.Accepted,
+                "В работе" => ComplaintStatus.InProgress,
+                "Решена" => ComplaintStatus.Resolved,
+                "Закрыта" => ComplaintStatus.Closed,
+                "Отклонена" => ComplaintStatus.Rejected,
+                _ => ComplaintStatus.New
+            };
+
+            var dto = new ComplaintStatusChangeDto
+            {
+                ComplaintId = tempData.SelectedApartmentId.Value,
+                Status = newStatus
+            };
+
+            try
+            {
+                await _complaintService.ChangeComplaintStatusAsync(dto, admin.Id);
+
+                var complaint = await _complaintService.GetComplaintDetailsAsync(dto.ComplaintId, userId);
+
+                // Уведомляем жильца
+                var details = await _complaintService.GetComplaintDetailsAsync(dto.ComplaintId, userId);
+                if (details?.ApartmentId != null)
+                {
+                    var apartment = await _apartmentService.GetByUserIdAsync(details.ApartmentId);
+                    if (apartment != null)
+                    {
+                        await _bot.SendMessage(userId,
+                            $"🔧 Статус вашей жалобы #{dto.ComplaintId.ToString("N").Substring(0, 8)} изменён\n\n" +
+                            $"Новый статус: <b>{text}</b>",
+                            parseMode: ParseMode.Html);
+                    }
+                }
+
+                await _bot.SendMessage(chatId, $"Статус изменён на: <b>{text}</b>", parseMode: ParseMode.Html);
+            }
+            catch
+            {
+                await _bot.SendMessage(chatId, "Ошибка при изменении статуса.");
+            }
+
+            _userState.ClearTempComplaintData(userId);
+            _userState.SetState(userId, ConversationState.None);
+            await ShowAdminComplaintsManagement(msg, admin);
+        }
+
+        private async Task SendAttachment(long chatId, AttachmentDto attachment)
+        {
+            try
+            {
+                if (attachment.Type == AttachmentType.Photo)
+                    await _bot.SendPhoto(chatId, attachment.TelegramFileId, caption: attachment.Caption);
+                else if (attachment.Type == AttachmentType.Document)
+                    await _bot.SendDocument(chatId, attachment.TelegramFileId, caption: attachment.Caption);
+            }
+            catch
+            {
+                await _bot.SendMessage(chatId, "Не удалось отправить вложение.");
+            }
+        }
+    }
 }

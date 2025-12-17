@@ -104,7 +104,18 @@ namespace HaCSBot.DataBase.Repositories
 			}
 		}
 
-		public async Task<List<Complaint>> GetUnprocessedAsync()
+        public async Task<List<Complaint>> GetAllAsync()
+        {
+            return await _context.Complaints
+                .AsNoTracking()
+                .Include(c => c.Apartment)
+                    .ThenInclude(a => a!.User)
+                .Include(c => c.Apartment)
+                    .ThenInclude(a => a!.Building)
+                .ToListAsync();
+        }
+
+        public async Task<List<Complaint>> GetUnprocessedAsync()
 		{
 			return await _context.Complaints
 				.AsNoTracking()

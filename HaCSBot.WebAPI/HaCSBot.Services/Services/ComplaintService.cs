@@ -67,7 +67,7 @@ namespace HaCSBot.Services.Services
 			if (user == null)
 				throw new InvalidOperationException("Пользователь не найден");
 
-			if (complaint.Apartment.UserId != user.Id && user.Role != Roles.Admin)
+			if (user.Role != Roles.Admin)
 				throw new UnauthorizedAccessException("Нет доступа к этой жалобе");
 
 			return _mapper.Map<ComplaintDetailsDto>(complaint);
@@ -83,7 +83,17 @@ namespace HaCSBot.Services.Services
 			return _mapper.Map<List<ComplaintDto>>(complaints);
 		}
 
-		public async Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId)
+        public async Task<List<ComplaintDto>> GetAllComplaintsForAdminAsync(Guid adminId)
+        {
+            var user = await _userRepository.GetByIdAsync(adminId);
+            if (user?.Role != Roles.Admin)
+                throw new UnauthorizedAccessException("Требуются права администратора");
+
+            var complaints = await _complaintRepository.GetAllAsync();
+            return _mapper.Map<List<ComplaintDto>>(complaints);
+        }
+
+        public async Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId)
 		{
 			var complaints = await _complaintRepository.GetByBuildingIdAsync(buildingId, 1, 100);
 			return _mapper.Map<List<ComplaintDto>>(complaints);

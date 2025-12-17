@@ -128,7 +128,15 @@ namespace HaCSBot.Services.Services
 			return _mapper.Map<UserDto>(user);
 		}
 
-		public async Task LogoutAsync(long telegramId)
+        public async Task<UserDto?> GetUserDtoAsyncByUserId(Guid userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return null;
+
+            return _mapper.Map<UserDto>(user);
+        }
+
+        public async Task LogoutAsync(long telegramId)
 		{
 			var user = await _userRepository.GetByTelegramIdAsync(telegramId);
 			if (user != null)

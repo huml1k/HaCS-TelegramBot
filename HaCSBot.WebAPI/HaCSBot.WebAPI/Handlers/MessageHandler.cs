@@ -1,8 +1,10 @@
 ﻿using HaCSBot.Contracts.DTOs;
 using HaCSBot.Services.Enums;
+using HaCSBot.Services.Services;
 using HaCSBot.Services.Services.Extensions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace HaCSBot.WebAPI.Handlers
@@ -15,24 +17,30 @@ namespace HaCSBot.WebAPI.Handlers
 		private readonly IUserService _userService;
 		private readonly ILogger<UpdateHandler> _logger;
 		private readonly IApartmentService _apartmentService;
-		private readonly MainMenuHandler _mainMenuHandler;
+		INotificationService _notificationService;
+        private readonly MainMenuHandler _mainMenuHandler;
 		private readonly StateDispatcherHandler _stateDispatcherHandler;
 		private readonly MeterReadingHandler _meterReadingHandler;
 		private readonly TariffHandler _tariffHandler;
 		private readonly ComplaintHandler _complaintHandler;
+		private readonly AdminPanelHandler _adminPanelHandler;
+		private readonly NotificationHandler _notificationHandler;
 
-		public MessageHandler(
+        public MessageHandler(
 			ITelegramBotClient bot,
 			IUserStateService userState,
 			IUserService userService,
 			ILogger<UpdateHandler> logger,
 			IApartmentService apartmentService,
+			INotificationService notificationService,
 			MainMenuHandler mainMenuHandler,
 			StateDispatcherHandler stateDispatcherHandler,
 			MeterReadingHandler meterReadingHandler,
 			TariffHandler tariffHandler,
-			ComplaintHandler complaintHandler
-			)
+			ComplaintHandler complaintHandler,
+			AdminPanelHandler adminPanelHandler,
+            NotificationHandler notificationHandler
+            )
 		{
 			_bot = bot;	
 			_userState = userState;
@@ -44,7 +52,10 @@ namespace HaCSBot.WebAPI.Handlers
 			_meterReadingHandler = meterReadingHandler;
 			_tariffHandler = tariffHandler;
 			_complaintHandler = complaintHandler;
-		}
+			_adminPanelHandler = adminPanelHandler;
+			_notificationHandler = notificationHandler;
+			_notificationService = notificationService;
+        }
 
 
 		public async Task HandleMessageAsync(Message msg)
@@ -124,20 +135,38 @@ namespace HaCSBot.WebAPI.Handlers
 					break;
 
 				case "Новые жалобы":
-					if (userDto.Role == 0) // только админ
+					if (userDto.Role == 0) 
 						await _complaintHandler.ShowNewComplaints(msg, userProfileDto);
 					else
 						await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
 					break;
 
-				//case "Все жалобы":
-				//	if (dbUser.Role == 0)
-				//		await _complaintHandler.ShowAllComplaints(msg, dbUser);
-				//	else
-				//		await _mainMenuHandler.ShowMainMenu(dbUser, chatId);
-				//	break;
+				case "Все жалобы":
+					if (userDto.Role == 0)
+						await _complaintHandler.ShowAllComplaints(msg, userProfileDto);
+					else
+						await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
+					break;
+                case "Панель управления":
+                    if (userDto.Role == 0)
+                        await _adminPanelHandler.ShowAdminPanel(chatId);
+                    break;
 
-				default:
+                case "Создать уведомление":
+                    if (userDto.Role == 0)
+                        await _notificationHandler.HandleCreateNotificationStart(msg, userProfileDto);
+                    break;
+                case "Управление жалобами":
+                    if (userDto.Role == 0)
+                        await _complaintHandler.ShowAdminComplaintsManagement(msg, userProfileDto);
+                    else
+                        await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
+                    break;
+                case "Уведомления":
+                    await HandleUserNotifications(msg, userProfileDto);
+                    break;
+
+                default:
 					// Неизвестное сообщение — просто показываем меню заново
 					await _bot.SendMessage(chatId, "Выберите действие из меню ниже:");
 					await _mainMenuHandler.ShowMainMenu(userProfileDto, chatId);
@@ -190,6 +219,27 @@ namespace HaCSBot.WebAPI.Handlers
 			await _bot.SendMessage(chatId, "Выберите квартиру, по которой хотите сообщить о проблеме:", replyMarkup: keyboard);
 			_userState.SetState(userId, ConversationState.AwaitingComplaintApartment);
 		}
-	}
+
+        private async Task HandleUserNotifications(Message msg, UserProfileDto user)
+        {
+            long chatId = msg.Chat.Id;
+            long userId = msg.From!.Id;
+
+            var notifications = await _notificationService.GetUserNotificationsAsync(userId, 1);
+
+            if (!notifications.Any())
+            {
+                await _bot.SendMessage(chatId, "📭 У вас пока нет уведомлений.");
+                return;
+            }
+
+            // Отправляем каждое уведомление
+            foreach (var notification in notifications)
+            {
+                var messageText = $"📢 *Уведомление*\n\n{notification.Message}\n\n_{notification.SentDate:dd.MM.yyyy HH:mm}_";
+                await _bot.SendMessage(chatId, messageText, parseMode: ParseMode.Markdown);
+            }
+        }
+    }
 
 }

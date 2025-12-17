@@ -11,7 +11,8 @@ namespace HaCSBot.DataBase.Repositories.Extensions
 		Task<Complaint?> GetByIdWithDetailsAsync(Guid id);
 		Task<List<Complaint>> GetByApartmentIdAsync(Guid apartmentId);
 		Task<List<Complaint>> GetByBuildingIdAsync(Guid buildingId, int page = 1, int pageSize = 20);
-		Task<List<Complaint>> GetActiveForBuildingAsync(Guid buildingId);
+		Task<List<Complaint>> GetAllAsync();
+        Task<List<Complaint>> GetActiveForBuildingAsync(Guid buildingId);
 		Task<List<Complaint>> GetByUserTelegramIdAsync(long telegramId);
 		Task ChangeStatusAsync(Guid complaintId, ComplaintStatus newStatus);
 		Task<List<Complaint>> GetUnprocessedAsync();

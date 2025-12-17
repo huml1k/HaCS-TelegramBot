@@ -19,6 +19,8 @@ namespace HaCSBot.WebAPI.Handlers
         private readonly MainMenuHandler _mainMenuHandler;
         private readonly ComplaintHandler _complaintHandler;
         private readonly TariffHandler _tariffHandler; // Добавляем TariffHandler
+        private readonly AdminPanelHandler _adminPanelHandler;
+        private readonly NotificationHandler _notificationHandler;
         private readonly IMapper _mapper;
 
         public StateDispatcherHandler(
@@ -29,6 +31,8 @@ namespace HaCSBot.WebAPI.Handlers
             MainMenuHandler mainMenuHandler,
             ComplaintHandler complaintHandler,
             TariffHandler tariffHandler, // Добавляем в конструктор
+            AdminPanelHandler adminPanelHandler,
+            NotificationHandler notificationHandler,
             IMapper mapper)
         {
             _bot = bot;
@@ -38,6 +42,8 @@ namespace HaCSBot.WebAPI.Handlers
             _mainMenuHandler = mainMenuHandler;
             _complaintHandler = complaintHandler;
             _tariffHandler = tariffHandler;
+            _adminPanelHandler = adminPanelHandler;
+            _notificationHandler = notificationHandler;
             _mapper = mapper;
         }
 
@@ -86,14 +92,35 @@ namespace HaCSBot.WebAPI.Handlers
                 case ConversationState.AwaitingMeterValue:
                     await _meterReadingHandler.HandleMeterValueInput(msg, userProfileDto);
                     break;
-
-                // Обработка тарифов делегируется TariffHandler
                 case ConversationState.AwaitingTariffApartment:
                     await _tariffHandler.HandleTariffApartmentSelection(msg, userProfileDto);
                     break;
-
-                case ConversationState.AwaitingTariffAddress:
-                    await _tariffHandler.HandleTariffAddressInput(msg, userProfileDto);
+                case ConversationState.AdminNotificationRecipient:
+                    await _notificationHandler.HandleRecipientSelection(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminNotificationBuilding:
+                    await _notificationHandler.HandleBuildingSelection(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminNotificationType:
+                    await _notificationHandler.HandleNotificationType(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminNotificationMessage:
+                    await _notificationHandler.HandleNotificationMessage(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminNotificationTitle:
+                    await _notificationHandler.HandleNotificationTitle(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminNotificationScheduled:
+                    await _notificationHandler.HandleNotificationScheduledOrAttachments(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminNotificationScheduledDate:
+                    await _notificationHandler.HandleNotificationScheduledDate(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminViewComplaintsList:
+                    await _complaintHandler.HandleAdminComplaintSelection(msg, userProfileDto);
+                    break;
+                case ConversationState.AdminChangeComplaintStatus:
+                    await _complaintHandler.HandleAdminComplaintStatusChange(msg, userProfileDto);
                     break;
             }
         }

@@ -2,6 +2,7 @@ using HaCSBot.Contracts.AutoMapping;
 using HaCSBot.DataBase;
 using HaCSBot.DataBase.Repositories;
 using HaCSBot.DataBase.Repositories.Extensions;
+using HaCSBot.Services.Senders.Extensions;
 using HaCSBot.Services.Services;
 using HaCSBot.Services.Services.Extensions;
 using HaCSBot.WebAPI.Handlers;
@@ -27,18 +28,22 @@ namespace HaCSBot.WebAPI
 			builder.Services.AddDbContext<MyApplicationDbContext>(options =>
 				options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-			//builder.Services.AddStackExchangeRedisCache(options =>
-			//{
-			//    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
-			//    options.InstanceName = "HaCSBot_";
-			//});
-			builder.Services.AddMemoryCache();
+            builder.Services.AddHostedService<NotificationBackgroundService>();
+
+            //builder.Services.AddStackExchangeRedisCache(options =>
+            //{
+            //    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+            //    options.InstanceName = "HaCSBot_";
+            //});
+
+            builder.Services.AddMemoryCache();
 			builder.Services.AddAutoMapper(
 				typeof(UserMapping).Assembly,
 				typeof(BuildingMapping).Assembly,
 				typeof(ApartmentMapping).Assembly,
 				typeof(ComplaintMapping).Assembly,
 				typeof(FileMappingProfile).Assembly,
+				typeof(NotificationMapping).Assembly,
 				typeof(Program).Assembly
 				);
 			//handlers
@@ -51,8 +56,11 @@ namespace HaCSBot.WebAPI
 			//builder.Services.AddScoped<RegistrationHandler>();
 			builder.Services.AddScoped<StateDispatcherHandler>();
 			builder.Services.AddScoped<TariffHandler>();
-			//services
-			builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<AdminPanelHandler>();
+			builder.Services.AddScoped<NotificationHandler>();
+            //services
+            builder.Services.AddScoped<ITelegramNotificationSender, TelegramNotificationSender>();
+            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IBuildingService, BuildingService>();
             builder.Services.AddScoped<IComplaintService, ComplaintService>();
             builder.Services.AddScoped<IFileService, FileService>();
@@ -77,17 +85,17 @@ namespace HaCSBot.WebAPI
             builder.Services.AddControllers();
 
 			builder.Services.AddEndpointsApiExplorer();
-            //builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            //if (app.Environment.IsDevelopment())
-            //{
-            //    app.UseSwagger();
-            //    app.UseSwaggerUI();
-            //}
+			if (app.Environment.IsDevelopment())
+			{
+				app.UseSwagger();
+				app.UseSwaggerUI();
+			}
 
-            app.UseHttpsRedirection();
+			app.UseHttpsRedirection();
             app.UseAuthorization();
 
 			app.MapControllers();

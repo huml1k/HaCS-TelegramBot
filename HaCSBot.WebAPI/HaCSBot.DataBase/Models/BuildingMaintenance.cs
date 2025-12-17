@@ -16,20 +16,5 @@ namespace HaCSBot.DataBase.Models
         public Guid UserId { get; set; }
         public Building Building { get; set; }
         public User User { get; set; }
-
-        public static BuildingMaintenance Create(BuildingMaintenance buildingMaintenance) 
-        {
-            return new BuildingMaintenance 
-            {
-                Id = buildingMaintenance.Id,
-                Type = buildingMaintenance.Type,
-                Description = buildingMaintenance.Description,
-                Status = buildingMaintenance.Status,
-                CreatedDate = buildingMaintenance.CreatedDate,
-                PlannedEndDate = buildingMaintenance.PlannedEndDate,
-                BuildingId = buildingMaintenance.BuildingId,
-                AdminId = buildingMaintenance.AdminId
-            };
-        }
     }
 }

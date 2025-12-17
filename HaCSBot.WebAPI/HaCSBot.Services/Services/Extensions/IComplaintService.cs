@@ -1,6 +1,4 @@
 ﻿using HaCSBot.Contracts.DTOs;
-using HaCSBot.DataBase.Enums;
-using HaCSBot.DataBase.Models;
 
 namespace HaCSBot.Services.Services.Extensions
 {
@@ -12,6 +10,7 @@ namespace HaCSBot.Services.Services.Extensions
 		Task<List<ComplaintDto>> GetNewComplaintsForAdminAsync(Guid adminId);
 		Task<List<ComplaintDto>> GetComplaintsByBuildingAsync(Guid buildingId);
 		Task<ComplaintDto> ChangeComplaintStatusAsync(ComplaintStatusChangeDto dto, Guid adminId);
-		Task<bool> CanUserAccessComplaintAsync(Guid complaintId, long telegramId);
+		Task<List<ComplaintDto>> GetAllComplaintsForAdminAsync(Guid adminId);
+        Task<bool> CanUserAccessComplaintAsync(Guid complaintId, long telegramId);
 	}
 }

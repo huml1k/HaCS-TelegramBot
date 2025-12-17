@@ -19,9 +19,27 @@
 		ViewingNotifications = 14,   // Просматривает уведомления
 		PayingBill = 15,              // Оплачивает счет
 		AwaitingTariffAddress = 16,
-		AwaitingFirstName,
-		AwaitingLastName,
-		AwaitingPhone,
-		AwaitingTariffApartment
-	}
+		AwaitingFirstName = 17,
+		AwaitingLastName = 18,
+		AwaitingPhone = 19,
+		AwaitingTariffApartment = 20,
+        // Админские состояния
+        AdminPanel,
+        AdminCreateNotification,
+
+        // Уведомления администратора
+        AdminNotificationRecipient,
+        AdminNotificationBuilding,
+        AdminNotificationApartmentSearch,
+        AdminNotificationApartmentSelect,
+        AdminNotificationType,
+        AdminNotificationMessage,
+        AdminNotificationScheduled,
+        AdminNotificationScheduledDate,
+        AdminNotificationAttachments,
+        AdminNotificationTitle,
+
+        AdminViewComplaintsList,
+        AdminChangeComplaintStatus
+    }
 }

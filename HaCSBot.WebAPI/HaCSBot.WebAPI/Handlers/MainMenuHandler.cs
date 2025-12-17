@@ -90,7 +90,8 @@ namespace HaCSBot.WebAPI.Handlers
 
 					var residentKeyboard = new ReplyKeyboardMarkup(new[]
 					{
-						new KeyboardButton("Сообщить о проблеме"),
+                        new KeyboardButton("Уведомления"),
+                        new KeyboardButton("Сообщить о проблеме"),
 						new KeyboardButton("Передача показаний счётчиков"),
 						new KeyboardButton("Тарифы"),
 						new KeyboardButton("Мои жалобы")

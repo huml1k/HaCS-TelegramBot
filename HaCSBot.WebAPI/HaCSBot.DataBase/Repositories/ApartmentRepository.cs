@@ -42,12 +42,13 @@ namespace HaCSBot.DataBase.Repositories
 
 		public async Task<List<Apartment>> GetApartmentsByBuildingIdAsync(Guid buildingId)
 		{
-			return await _context.Apartments
+            return await _context.Apartments
 				.AsNoTracking()
-				.Include(b => b.Building)
-				.Where(Building => buildingId == Building.Id)
+				.Include(a => a.Building)
+				.Include(a => a.User) 
+				.Where(a => a.BuildingId == buildingId)
 				.ToListAsync();
-		}
+        }
 
 		public async Task<IEnumerable<Apartment>> GetByBuildingIdAsync(Guid buildingId)
         {

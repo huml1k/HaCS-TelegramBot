@@ -21,8 +21,14 @@ namespace HaCSBot.DataBase.Repositories
 
 		public async Task UpdateAsync(Notification notification)
 		{
-			_context.Notifications.Update(notification);
-			await _context.SaveChangesAsync();
+			var existing = await _context.Notifications
+				.FirstOrDefaultAsync(n => n.Id == notification.Id);
+
+			if (existing != null)
+			{
+				_context.Entry(existing).CurrentValues.SetValues(notification);
+				await _context.SaveChangesAsync();
+			}
 		}
 
 		public async Task<Notification?> GetByIdAsync(Guid id)
@@ -44,27 +50,42 @@ namespace HaCSBot.DataBase.Repositories
 
 		public async Task<List<Notification>> GetLatestForUserAsync(long telegramId, int count = 20)
 		{
-			return await _context.NotificationDeliveries
-				.AsNoTracking()
-				.Where(d => d.TelegramUserId == telegramId)
-				.OrderByDescending(d => d.Notification!.CreatedDate)
-				.Take(count)
-				.Select(d => d.Notification!)
-				.Include(n => n.Attachments)
-				.Include(n => n.Building)
-				.ToListAsync();
-		}
+            // Получаем ID уведомлений пользователя
+            var notificationIds = await _context.NotificationDeliveries
+                .AsNoTracking()
+                .Where(d => d.TelegramUserId == telegramId)
+                .OrderByDescending(d => d.Notification.CreatedDate)
+                .Select(d => d.NotificationId)
+                .Take(count)
+                .ToListAsync();
+
+            // Получаем уведомления с включенными данными
+            return await _context.Notifications
+                .AsNoTracking()
+                .Where(n => notificationIds.Contains(n.Id))
+                .Include(n => n.Attachments)
+                .Include(n => n.Building)
+                .OrderByDescending(n => n.CreatedDate)
+                .ToListAsync();
+        }
 
 		public async Task<List<Notification>> GetUnreadForUserAsync(long telegramId)
 		{
-			return await _context.NotificationDeliveries
-				.AsNoTracking()
-				.Where(d => d.TelegramUserId == telegramId && d.ReadDate == null)
-				.OrderByDescending(d => d.Notification!.CreatedDate)
-				.Select(d => d.Notification!)
-				.Include(n => n.Attachments)
-				.ToListAsync();
-		}
+            // Получаем ID непрочитанных уведомлений
+            var notificationIds = await _context.NotificationDeliveries
+                .AsNoTracking()
+                .Where(d => d.TelegramUserId == telegramId && d.ReadDate == null)
+                .Select(d => d.NotificationId)
+                .ToListAsync();
+
+            // Получаем уведомления с включенными данными
+            return await _context.Notifications
+                .AsNoTracking()
+                .Where(n => notificationIds.Contains(n.Id))
+                .Include(n => n.Attachments)
+                .OrderByDescending(n => n.CreatedDate)
+                .ToListAsync();
+        }
 
 		public async Task<List<Notification>> GetAllForBuildingAsync(Guid buildingId, int page = 1, int pageSize = 20)
 		{

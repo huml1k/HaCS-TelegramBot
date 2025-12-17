@@ -12,8 +12,9 @@ namespace HaCSBot.Services.Services
 		private readonly ConcurrentDictionary<long, RegistrationTempDto> _tempData = new();
 		private readonly ConcurrentDictionary<long, ComplaintTempDto> _tempDataComaplaint = new();
 		private readonly ConcurrentDictionary<long, MeterReadingTempDto> _tempDataMeter = new();
+        private readonly ConcurrentDictionary<long, NotificationTempDto> _tempDataNotification = new();
 
-		public ConversationState GetState(long telegramId)
+        public ConversationState GetState(long telegramId)
 		{
 			return _states.GetValueOrDefault(telegramId, ConversationState.None);
 		}
@@ -73,5 +74,20 @@ namespace HaCSBot.Services.Services
 		{
 			_tempDataMeter.TryRemove(telegramId, out _);
 		}
-	}
+
+        public NotificationTempDto? GetTempNotificationData(long telegramId)
+        {
+            return _tempDataNotification.TryGetValue(telegramId, out var data) ? data : null;
+        }
+
+        public void SetTempNotificationData(long telegramId, NotificationTempDto data)
+        {
+            _tempDataNotification[telegramId] = data;
+        }
+
+        public void ClearTempNotificationData(long telegramId)
+        {
+            _tempDataNotification.TryRemove(telegramId, out _);
+        }
+    }
 }

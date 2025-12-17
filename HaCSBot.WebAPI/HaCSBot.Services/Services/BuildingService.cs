@@ -59,7 +59,14 @@ namespace HaCSBot.Services.Services
 			return _mapper.Map<List<ApartmentDto>>(apartments);
 		}
 
-		private (StreetsType? streetType, string streetName, string buildingNumber) ParseAddress(string fullAddress)
+        public async Task<List<BuildingForNotificationDto>> GetAllBuildingsAsync()
+        {
+            var buildings = await _buildingRepository.GetAllAsync();
+            return _mapper.Map<List<BuildingForNotificationDto>>(buildings);
+        }
+
+
+        private (StreetsType? streetType, string streetName, string buildingNumber) ParseAddress(string fullAddress)
 		{
 			var normalized = fullAddress.Trim().ToLowerInvariant();
 
