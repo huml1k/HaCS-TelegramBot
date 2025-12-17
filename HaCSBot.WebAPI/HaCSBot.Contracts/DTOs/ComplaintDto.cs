@@ -9,6 +9,8 @@ namespace HaCSBot.Contracts.DTOs
 		public string Description { get; set; } = string.Empty;
 		public List<string> Attachments { get; set; } = new List<string>();
 		public ComplaintStatus Status { get; set; }
+
+		public ComplaintCategory Category { get; set; }
 	}
 
 	public class ComplaintDetailsDto

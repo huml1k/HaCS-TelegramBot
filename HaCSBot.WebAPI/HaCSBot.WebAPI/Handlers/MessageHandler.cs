@@ -119,7 +119,7 @@ namespace HaCSBot.WebAPI.Handlers
 			switch (text)
 			{
 				case "Сообщить о проблеме":
-					await HandleReportProblem(msg);
+					await _complaintHandler.HandleReportProblem(msg);
 					break;
 
 				case "Передача показаний счётчиков":
@@ -173,7 +173,7 @@ namespace HaCSBot.WebAPI.Handlers
 					break;
 			}
 		}
-
+		
 		public async Task HandleReportProblem(Message message)
 		{
 			long chatId = message.Chat.Id;
@@ -241,5 +241,4 @@ namespace HaCSBot.WebAPI.Handlers
             }
         }
     }
-
 }

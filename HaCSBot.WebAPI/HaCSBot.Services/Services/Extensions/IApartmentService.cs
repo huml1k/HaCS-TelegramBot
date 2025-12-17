@@ -8,5 +8,7 @@ namespace HaCSBot.Services.Services.Extensions
         Task<List<ApartmentDto>> GetByUserIdAsync(Guid userId);
         Task<ApartmentDto?> GetByIdAsync(Guid apartmentId);
         Task<List<ApartmentDto>> GetApartmentsInBuildingAsync(Guid buildingId);
-    }
+		public Task<List<ApartmentDto>> GetByUserIdAsync(Guid userId);
+		public Task<ApartmentDto> GetByIdAsync(Guid id);
+    }   
 }

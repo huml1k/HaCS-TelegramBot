@@ -68,12 +68,12 @@ namespace HaCSBot.WebAPI.Handlers
                 case ConversationState.AwaitingComplaintApartment:
                     await _complaintHandler.HandleComplaintApartmentSelection(msg, userProfileDto);
                     break;
+                    //вызывает метод костыль
+                case ConversationState.AwaitingComplaintPhoto:
+                    await _complaintHandler.HandleComplaintSendAnswer(msg, userProfileDto);
+                    break;
 
-				case ConversationState.AwaitingComplaintPhoto:
-					await _complaintHandler.HandleComplaintAttachments(msg, userProfileDto);
-					break;
-
-				case ConversationState.AwaitingComplaintCategory:
+                case ConversationState.AwaitingComplaintCategory:
                     await _complaintHandler.HandleComplaintCategorySelection(msg, userProfileDto);
                     break;
 
