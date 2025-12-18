@@ -49,11 +49,5 @@ namespace HaCSBot.Services.Services
             var apartments = await _apartmentRepository.GetApartmentsByBuildingIdAsync(buildingId);
             return _mapper.Map<List<ApartmentDto>>(apartments);
         }
-
-        public async Task<ApartmentDto?> GetByIdAsync(Guid apartmentId)
-        {
-            var apartment = await _apartmentRepository.GetByIdAsync(apartmentId);
-            return _mapper.Map<ApartmentDto>(apartment);
-        }
     }
 }
